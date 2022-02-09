@@ -1,5 +1,7 @@
 #include "stm32f4xx_hal.h"
+#define SLAVE_ADDRESS_LCD 0x4E // change this according to ur setup
 I2C_HandleTypeDef hi2c1;
+
 void lcd_init (void);   // initialize lcd
 
 void lcd_send_cmd (char cmd);  // send command to the lcd

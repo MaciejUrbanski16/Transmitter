@@ -2,7 +2,7 @@
 #define magnetometer
 #include "stm32f4xx_hal.h"
 
-#define HMC5883L_ADRESS 0x1E
+#define HMC5883L_ADRESS 0x1A
 
 #define configurationA  0x78
 #define configurationB 0xA0

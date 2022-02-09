@@ -48,13 +48,12 @@ enum I2C_services
 volatile int currentI2CService = NONE;
 UART_HandleTypeDef huart2;
 
-I2C_HandleTypeDef hi2c1, hi2c3;
+I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer4;
 
 
 void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_I2C3_Init(void);
 static void MX_TIM4_Init(void);
 
 int row=0;
@@ -70,33 +69,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM4)
 	{
-//		char dataToLCD[32];
-//		  sprintf(dataToLCD, "Counter tim4 :%d", counterTimer4);
-//		  lcd_clear();
-//		  lcd_put_cur(0, 0);
-//		  lcd_send_string (dataToLCD);
-//		  counterTimer4++;
-//		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+
 	}
-}
-void initHMC5883L()
-{
-//	uint8_t configA = configurationA;
-//	uint8_t configB = configurationB;
-//	uint8_t m = mode;
-//	HAL_I2C_Mem_Write(&hi2c3, HMC5883L_ADRESS, /*mem addr*/ 0x00 , 1, &configA , 1, 100);
-//	HAL_Delay(100);
-//	HAL_I2C_Mem_Write(&hi2c3, HMC5883L_ADRESS, /*mem addr*/ 0x01 , 1, &configB , 1, 100);
-//	HAL_Delay(100);
-//	HAL_I2C_Mem_Write(&hi2c3, HMC5883L_ADRESS, /*mem addr*/ 0x02 , 1, &m , 1, 100);
-//	HAL_Delay(100);
-	uint8_t array[2];
-	array[0] = 1;
-	array[1] = 0x11;
-
-	HAL_I2C_Mem_Write(&hi2c3, 0x1A, 0x0B, 1, &array[0], 1, 100);
-	HAL_I2C_Mem_Write(&hi2c3, 0x1A, 0x09, 1, &array[1], 1, 100);
-
 }
 
 int main(void)
@@ -133,18 +107,17 @@ int main(void)
 	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
 
 	HAL_Init();
-	 GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 
 
-	    __GPIOA_CLK_ENABLE();
-	    __GPIOB_CLK_ENABLE();
-	    __GPIOC_CLK_ENABLE();
-	    __USART2_CLK_ENABLE();
+	 __GPIOA_CLK_ENABLE();
+	 __GPIOB_CLK_ENABLE();
+	 __GPIOC_CLK_ENABLE();
+	 __USART2_CLK_ENABLE();
 
-	    __HAL_RCC_I2C1_CLK_ENABLE();
-	    __HAL_RCC_GPIOD_CLK_ENABLE();
-	    __HAL_RCC_GPIOA_CLK_ENABLE();
-	    __HAL_RCC_GPIOB_CLK_ENABLE();
+	 __HAL_RCC_GPIOD_CLK_ENABLE();
+	 __HAL_RCC_GPIOA_CLK_ENABLE();
+	 __HAL_RCC_GPIOB_CLK_ENABLE();
 
     GPIO_InitStruct.Pin = GPIO_PIN_1| GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7/*|GPIO_PIN_8*/;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -152,42 +125,21 @@ int main(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    //HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-	GPIO_InitTypeDef gpio1;
-	gpio1.Pin = /*GPIO_PIN_4 |*/GPIO_PIN_8 | GPIO_PIN_9;
-	gpio1.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitTypeDef gpio_I2C1_SDA_SCL;
+	gpio_I2C1_SDA_SCL.Pin = /*GPIO_PIN_4 |*/GPIO_PIN_8 | GPIO_PIN_9;
+	gpio_I2C1_SDA_SCL.Mode = GPIO_MODE_AF_OD;
 			// SCL, SDA
-	gpio1.Pull = GPIO_NOPULL;
-	gpio1.Alternate = GPIO_AF4_I2C1;
-	gpio1.Speed = GPIO_SPEED_HIGH;
-	HAL_GPIO_Init(GPIOB, &gpio1);
-
-	GPIO_InitTypeDef gpio2;
-		gpio2.Pin = /*GPIO_PIN_4 |*/GPIO_PIN_9;
-		gpio2.Mode = GPIO_MODE_AF_OD;
-				// SCL, SDA
-		gpio2.Pull = GPIO_NOPULL;
-		gpio2.Alternate = GPIO_AF4_I2C1;
-		gpio2.Speed = GPIO_SPEED_HIGH;
-		HAL_GPIO_Init(GPIOC, &gpio2);
-
-		gpio2.Pin = GPIO_PIN_8;
-		gpio2.Mode = GPIO_MODE_AF_OD;
-		HAL_GPIO_Init(GPIOA, &gpio2);
+	gpio_I2C1_SDA_SCL.Pull = GPIO_NOPULL;
+	gpio_I2C1_SDA_SCL.Alternate = GPIO_AF4_I2C1;
+	gpio_I2C1_SDA_SCL.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOB, &gpio_I2C1_SDA_SCL);
 
 	__HAL_RCC_I2C1_CLK_ENABLE();
-	__HAL_RCC_I2C3_CLK_ENABLE();
-
 	__HAL_RCC_TIM4_CLK_ENABLE();
+
 	MX_I2C1_Init();
-	MX_I2C3_Init();
-
-
 	MX_TIM4_Init();
-
-
-
     MX_USART2_UART_Init();
 
 
@@ -203,7 +155,7 @@ int main(void)
 	  char dataX[16];
 	  char dataY[16];
 
-	  while (HAL_I2C_IsDeviceReady(&hi2c3, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
+	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
 	  {
 		  lcd_clear();
 		  lcd_put_cur(0, 0);
@@ -214,8 +166,6 @@ int main(void)
 
 	  }
 
-#define HMC5883l_ADD_DATAX_MSB_MULTI (XaxisMSB | 0x80)
-#define HMC5883l_ADD_DATAY_MSB_MULTI (YaxisMSB | 0x80)
 	  uint8_t dataM[6];
 	  uint8_t DataY[2];
 	  uint16_t Xaxis = 0;
@@ -225,11 +175,10 @@ int main(void)
 
 	  while (1)
 	  {
-		  //HAL_I2C_Mem_Read(&hi2c3,HMC5883L_ADRESS,HMC5883l_ADD_DATAX_MSB_MULTI,1,DataX,2,100);
-		  HAL_I2C_Mem_Read(&hi2c3, HMC5883L_ADRESS, 0x06, 1, dataM, 1, 100);
+		  HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x06, 1, dataM, 1, 100);
 		  if((dataM[0]&0x01)==1)
 		  {
-			  HAL_I2C_Mem_Read(&hi2c3, HMC5883L_ADRESS, 0x00, 1, dataM, 6, 100);
+			  HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x00, 1, dataM, 6, 100);
 			  Xaxis= (dataM[1]<<8) | dataM[0];
 			  Yaxis= (dataM[3]<<8) | dataM[2];
 			  Zaxis= (dataM[5]<<8) | dataM[4];
@@ -237,26 +186,13 @@ int main(void)
 			  HAL_Delay(50);
 			  lcd_clear ();
 			  lcd_put_cur(0, 0);
-			  sprintf(dataX, "Xd10: %d", 76);
+			  sprintf(dataX, "Xd10: %d", 36);
 			  lcd_send_string (dataX);
 		  }
 
-//		  Xaxis = ((DataX[1]<<8) | DataX[0])/660.f;
-//		  HAL_I2C_Mem_Read(&hi2c3,HMC5883L_ADRESS,HMC5883l_ADD_DATAY_MSB_MULTI,1,DataY,2,100);
-//		  Yaxis = ((DataY[1]<<8) | DataY[0])/ 660.f;
 		  HAL_Delay(1000);
-//		  lcd_clear ();
-//		  HAL_Delay(50);
-//		  lcd_put_cur(0, 0);
 
-//		  sprintf(dataY, "Yd1: %d", Yaxis);
-//		  lcd_put_cur(1, 0);
-//		  lcd_send_string (dataY);
-		  //HAL_UART_Transmit(&huart2, &dataY[], 10, 1000);
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-
-
 	  }
 
 }
@@ -274,22 +210,6 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
   HAL_I2C_Init(&hi2c1);
-
-}
-
-static void MX_I2C3_Init(void)
-{
-
-  hi2c3.Instance = I2C3;
-  hi2c3.Init.ClockSpeed = 100000;
-  hi2c3.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c3.Init.OwnAddress1 = 0;
-  hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c3.Init.OwnAddress2 = 0;
-  hi2c3.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c3.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  HAL_I2C_Init(&hi2c3);
 
 }
 

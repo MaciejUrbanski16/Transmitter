@@ -152,8 +152,8 @@ int main(void)
 	  lcd_clear();
 
 
-	  char dataX[16];
-	  char dataY[16];
+	  char dataXY[16];
+	  char dataZ[16];
 
 	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
 	  {
@@ -167,10 +167,10 @@ int main(void)
 	  }
 
 	  uint8_t dataM[6];
-	  uint8_t DataY[2];
-	  uint16_t Xaxis = 0;
-	  uint16_t Yaxis = 0;
-	  uint16_t Zaxis = 0;
+	  int8_t DataY[2];
+	  int16_t Xaxis = 0;
+	  int16_t Yaxis = 0;
+	  int16_t Zaxis = 0;
 
 
 	  while (1)
@@ -186,8 +186,11 @@ int main(void)
 			  HAL_Delay(50);
 			  lcd_clear ();
 			  lcd_put_cur(0, 0);
-			  sprintf(dataX, "Xd10: %d", 36);
-			  lcd_send_string (dataX);
+			  sprintf(dataXY, "X:%d Y:%d", Xaxis, Yaxis);
+			  lcd_send_string (dataXY);
+			  lcd_put_cur(1, 0);
+			  sprintf(dataZ, "Z: %d", Zaxis);
+			  lcd_send_string (dataZ);
 		  }
 
 		  HAL_Delay(1000);

@@ -9,6 +9,7 @@
 //*/
 
 #include <stdio.h>
+#include <math.h>
 #include "stm32f4xx.h"
 #include "stm32f4xx_nucleo.h"
 #include "stm32f4xx_hal.h"
@@ -183,14 +184,15 @@ int main(void)
 			  Yaxis= (dataM[3]<<8) | dataM[2];
 			  Zaxis= (dataM[5]<<8) | dataM[4];
 
+			  float degree = atan2f((float)Yaxis, (float)Xaxis)*(180/M_PI);
 			  HAL_Delay(50);
 			  lcd_clear ();
 			  lcd_put_cur(0, 0);
-			  sprintf(dataXY, "X:%d Y:%d", Xaxis, Yaxis);
+			  sprintf(dataXY, "Degr:%d", (int)degree);
 			  lcd_send_string (dataXY);
-			  lcd_put_cur(1, 0);
-			  sprintf(dataZ, "Z: %d", Zaxis);
-			  lcd_send_string (dataZ);
+//			  lcd_put_cur(1, 0);
+//			  sprintf(dataZ, "Z: %d", Zaxis);
+//			  lcd_send_string (dataZ);
 		  }
 
 		  HAL_Delay(1000);

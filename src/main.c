@@ -190,6 +190,11 @@ int main(void)
 	  int16_t Xaxis = 0;
 	  int16_t Yaxis = 0;
 	  int16_t Zaxis = 0;
+	  uint8_t DataAccX[2];
+	  uint8_t DataAccY[2];
+	  uint8_t DataAccZ[2];
+	  uint8_t DataAccT[2];
+	  int16_t rawX, rawY, rawZ, rawT;
 
 
 	  while (1)
@@ -202,15 +207,40 @@ int main(void)
 			  Yaxis= (dataM[3]<<8) | dataM[2];
 			  Zaxis= (dataM[5]<<8) | dataM[4];
 
-			  float degree = atan2f((float)Yaxis, (float)Xaxis)*(180/M_PI);
-			  HAL_Delay(50);
-			  lcd_clear ();
-			  lcd_put_cur(0, 0);
-			  sprintf(dataXY, "Degr:%d", (int)degree);
-			  lcd_send_string (dataXY);
+//			  float degree = atan2f((float)Yaxis, (float)Xaxis)*(180/M_PI);
+//			  HAL_Delay(50);
+//			  lcd_clear ();
+//			  lcd_put_cur(0, 0);
+//			  sprintf(dataXY, "Degr:%d", (int)degree);
+//			  lcd_send_string (dataXY);
 //			  lcd_put_cur(1, 0);
 //			  sprintf(dataZ, "Z: %d", Zaxis);
 //			  lcd_send_string (dataZ);
+
+			  uint8_t who = 8;
+			  char acc[16];
+			  char acc2[16];
+			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
+			  rawX = (DataAccX[1]<<8) | DataAccX[0];
+
+			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
+			  rawY = (DataAccY[1]<<8) | DataAccY[0];
+
+			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
+			  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
+
+			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
+			  rawT = (DataAccT[1]<<8) | DataAccT[0];
+
+			  sprintf(acc, "X %d Y %d", rawX, rawY);
+
+			  lcd_clear();
+			  lcd_put_cur(0, 0);
+			  lcd_send_string(acc);
+
+			  lcd_put_cur(1, 0);
+			  sprintf(acc2, "Z %d T %d", rawZ, rawT);
+			  lcd_send_string(acc2);
 		  }
 
 		  HAL_Delay(1000);

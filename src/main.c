@@ -51,16 +51,30 @@ volatile int currentI2CService = NONE;
 UART_HandleTypeDef huart2;
 
 I2C_HandleTypeDef hi2c1;
-TIM_HandleTypeDef timer4;
+TIM_HandleTypeDef timer2, timer4;
 
 
 void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
+
+//TIM2_IRQn
+
 
 int row=0;
 int col=0;
 volatile int counterTimer4 = 0;
+
+static const uint16_t bufferAccSize = 1024;
+volatile int16_t bufferAccXaxis[1024];
+volatile int16_t bufferAccYaxis[1024];
+volatile int16_t bufferAccZaxis[1024];
+
+void TIM2_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&timer2);
+}
 
 void TIM4_IRQHandler(void)
 {
@@ -69,11 +83,41 @@ void TIM4_IRQHandler(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if(htim->Instance == TIM4)
+	if(htim->Instance == TIM2)
 	{
+		  int16_t Xaxis = 0;
+		  int16_t Yaxis = 0;
+		  int16_t Zaxis = 0;
+		  uint8_t DataAccX[2];
+		  uint8_t DataAccY[2];
+		  uint8_t DataAccZ[2];
+		  uint8_t DataAccT[2];
+		  int16_t rawX, rawY, rawZ, rawT;
+
+		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+
+
+		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
+		  rawX = (DataAccX[1]<<8) | DataAccX[0];
+
+		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
+		  rawY = (DataAccY[1]<<8) | DataAccY[0];
+
+		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
+		  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
+
+		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
+		  rawT = (DataAccT[1]<<8) | DataAccT[0];
 
 	}
+	else if(htim->Instance == TIM4)
+	{
+		//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	}
 }
+
+
+
 
 int main(void)
 {
@@ -139,9 +183,11 @@ int main(void)
 
 	__HAL_RCC_I2C1_CLK_ENABLE();
 	__HAL_RCC_TIM4_CLK_ENABLE();
+	__HAL_RCC_TIM4_CLK_ENABLE();
 
 	MX_I2C1_Init();
 	MX_TIM4_Init();
+	MX_TIM2_Init();
     MX_USART2_UART_Init();
 
 
@@ -190,11 +236,11 @@ int main(void)
 	  int16_t Xaxis = 0;
 	  int16_t Yaxis = 0;
 	  int16_t Zaxis = 0;
-	  uint8_t DataAccX[2];
-	  uint8_t DataAccY[2];
-	  uint8_t DataAccZ[2];
-	  uint8_t DataAccT[2];
-	  int16_t rawX, rawY, rawZ, rawT;
+//	  uint8_t DataAccX[2];
+//	  uint8_t DataAccY[2];
+//	  uint8_t DataAccZ[2];
+//	  uint8_t DataAccT[2];
+//	  int16_t rawX, rawY, rawZ, rawT;
 
 
 	  while (1)
@@ -220,32 +266,32 @@ int main(void)
 			  uint8_t who = 8;
 			  char acc[16];
 			  char acc2[16];
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
-			  rawX = (DataAccX[1]<<8) | DataAccX[0];
+//			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
+//			  rawX = (DataAccX[1]<<8) | DataAccX[0];
+//
+//			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
+//			  rawY = (DataAccY[1]<<8) | DataAccY[0];
+//
+//			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
+//			  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
+//
+//			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
+//			  rawT = (DataAccT[1]<<8) | DataAccT[0];
 
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
-			  rawY = (DataAccY[1]<<8) | DataAccY[0];
-
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
-			  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
-
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
-			  rawT = (DataAccT[1]<<8) | DataAccT[0];
-
-			  sprintf(acc, "X %d Y %d", rawX, rawY);
-
-			  lcd_clear();
-			  lcd_put_cur(0, 0);
-			  lcd_send_string(acc);
-
-			  lcd_put_cur(1, 0);
-			  sprintf(acc2, "Z %d T %d", rawZ, rawT);
-			  lcd_send_string(acc2);
+//			  sprintf(acc, "X %d Y %d", rawX, rawY);
+//
+//			  lcd_clear();
+//			  lcd_put_cur(0, 0);
+//			  lcd_send_string(acc);
+//
+//			  lcd_put_cur(1, 0);
+//			  sprintf(acc2, "Z %d T1 %d", rawZ, rawT);
+//			  lcd_send_string(acc2);
 		  }
 
 		  HAL_Delay(1000);
 
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+		  //HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	  }
 
 }
@@ -266,10 +312,26 @@ static void MX_I2C1_Init(void)
 
 }
 
+static void MX_TIM2_Init(void)
+{
+	timer2.Instance = TIM2;
+	timer2.Init.Period = 500 - 1;
+	timer2.Init.Prescaler = 8000 - 1;
+	timer2.Init.ClockDivision = 0;
+	timer2.Init.CounterMode = TIM_COUNTERMODE_UP;
+	timer2.Init.RepetitionCounter = 0;
+	timer2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+	HAL_TIM_Base_Init(&timer2);
+
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+	HAL_TIM_Base_Start_IT(&timer2);
+}
+
 static void MX_TIM4_Init(void)
 {
 	timer4.Instance = TIM4;
-	timer4.Init.Period = 32000 - 1;
+	timer4.Init.Period = 200 - 1;
 	timer4.Init.Prescaler = 8000 - 1;
 	timer4.Init.ClockDivision = 0;
 	timer4.Init.CounterMode = TIM_COUNTERMODE_UP;

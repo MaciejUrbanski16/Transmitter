@@ -21,6 +21,7 @@
 #include "stm32f4xx.h"
 #include "i2c-lcd.h"
 #include "magnetometer.h"
+#include "accelerometer.h"
 
 #define RS_PORT GPIOA
 #define RS_PIN GPIO_PIN_1
@@ -146,7 +147,7 @@ int main(void)
 
 
 
-
+    initAccelerometer();
 
 	  lcd_init ();
 	  initHMC5883L();
@@ -155,17 +156,34 @@ int main(void)
 
 	  char dataXY[16];
 	  char dataZ[16];
-
-	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
+	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)ACC_ADDRESS << 1, 10, 100) != HAL_OK)
 	  {
+		  uint8_t who = 8;
+		  char outWho[16];
+		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0F, 1, &who, 1, 100);
+		  sprintf(outWho, "AC2not %d", who);
 		  lcd_clear();
 		  lcd_put_cur(0, 0);
-		  lcd_send_string ("I2C8tw. HMC");
+		  lcd_send_string(outWho);
 
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		  HAL_Delay(500);
 
 	  }
+
+
+	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
+	  {
+		  lcd_clear();
+		  lcd_put_cur(0, 0);
+		  lcd_send_string ("HMCnotready");
+
+		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+		  HAL_Delay(500);
+
+	  }
+
+
 
 	  uint8_t dataM[6];
 	  int8_t DataY[2];

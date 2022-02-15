@@ -88,30 +88,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM2)
 	{
-		  int16_t Xaxis = 0;
-		  int16_t Yaxis = 0;
-		  int16_t Zaxis = 0;
-		  uint8_t DataAccX[2];
-		  uint8_t DataAccY[2];
-		  uint8_t DataAccZ[2];
-		  uint8_t DataAccT[2];
-		  int16_t rawX, rawY, rawZ, rawT;
-
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-//need to start reading the data with timer peoriodicity
-//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
-//		  rawX = (DataAccX[1]<<8) | DataAccX[0];
-//
-//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
-//		  rawY = (DataAccY[1]<<8) | DataAccY[0];
-//
-//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZFromTimer, 2, 100);
-//		  DataAccZFromTimer[incrementor] = (DataAccZ[1]<<8) | DataAccZ[0];
-//		  incrementor++;
-//
-//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
-//		  rawT = (DataAccT[1]<<8) | DataAccT[0];
 
 	}
 	else if(htim->Instance == TIM4)
@@ -230,17 +206,6 @@ int main(void)
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
-
-
-
-
-
-
-	  uint8_t DataAccX[2];
-	  uint8_t DataAccY[2];
-	  uint8_t DataAccZ[2];
-	  uint8_t DataAccT[2];
-	  int16_t rawX, rawY, rawZ, rawT;
 	  float degree;
 
 	  while (1)
@@ -248,48 +213,21 @@ int main(void)
 		  if(1 == checkAvalibilityOfDataInRegister())
 		  {
 			  degree = calculateAzimutWithDegree();
+
+			  XYZaxisAccelerationMS2 accel;
+			  accel = getCalculatedAcceleration();
+
+			  char acc2[16];
 			  HAL_Delay(50);
 			  lcd_clear ();
 			  lcd_put_cur(0, 0);
 			  sprintf(dataXY, "Degr:%d", (int)degree);
 			  lcd_send_string (dataXY);
-//			  lcd_put_cur(1, 0);
-//			  sprintf(dataZ, "Z: %d", Zaxis);
-//			  lcd_send_string (dataZ);
-
-			  uint8_t who = 8;
-			  char acc[16];
-			  char acc2[16];
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
-			  rawX = (DataAccX[1]<<8) | DataAccX[0];
-
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
-			  rawY = (DataAccY[1]<<8) | DataAccY[0];
-
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
-			  //from interupt
-			  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
-
-			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
-			  rawT = (DataAccT[1]<<8) | DataAccT[0];
-
-			  sprintf(acc, "X %d Y %d", (int)calculateAcceleration(rawX), (int)calculateAcceleration(rawY));
-
-//			  lcd_clear();
-//			  lcd_put_cur(0, 0);
-//			  lcd_send_string(acc);
-			  const float grawity = calculateAcceleration(rawZ);
-			  AccelerationMS2 accel;
-			  accel = getAcceleration(grawity);
-
 			  lcd_put_cur(1, 0);
-			  sprintf(acc2, "Z %d.%d", accel.integerPart, accel.floatingPart);
+			  sprintf(acc2, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
 			  lcd_send_string(acc2);
 		  }
-
 		  HAL_Delay(1000);
-
-		  //HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	  }
 
 }
@@ -297,16 +235,16 @@ int main(void)
 static void MX_I2C1_Init(void)
 {
 
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  HAL_I2C_Init(&hi2c1);
+    hi2c1.Instance = I2C1;
+    hi2c1.Init.ClockSpeed = 100000;
+    hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+    hi2c1.Init.OwnAddress1 = 0;
+    hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    hi2c1.Init.OwnAddress2 = 0;
+    hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+    hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+    HAL_I2C_Init(&hi2c1);
 
 }
 

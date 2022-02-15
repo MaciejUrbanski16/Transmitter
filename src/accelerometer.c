@@ -34,14 +34,60 @@ void waitTillAccelerometerIsInitialized(void)
 		  lcd_send_string(outWho);
 
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  HAL_Delay(500);
+		  HAL_Delay(200);
 
 	  }
+}
+
+int readRawX()
+{
+	uint8_t DataAccX[2];
+	int rawX;
+	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
+	rawX = (DataAccX[1]<<8) | DataAccX[0];
+	return rawX;
+}
+
+int readRawY()
+{
+	uint8_t DataAccY[2];
+	int rawY;
+	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
+	rawY = (DataAccY[1]<<8) | DataAccY[0];
+	return rawY;
+}
+
+int readRawZ()
+{
+	uint8_t DataAccZ[2];
+	int rawZ;
+	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
+	rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
+	return rawZ;
 }
 
 float calculateAcceleration(const int rawAcceleration)
 {
 	return ((float)rawAcceleration * g)/(float)rawGrawity;
+}
+
+XYZaxisAccelerationMS2 getCalculatedAcceleration()
+{
+	XYZaxisAccelerationMS2 calculatedAcceleration;
+
+	int16_t rawX = readRawX();
+	int16_t rawY = readRawY();
+	int16_t rawZ = readRawZ();
+
+	float XaccelerationInMS2 = calculateAcceleration(rawX);
+	float YaccelerationInMS2 = calculateAcceleration(rawY);
+	float ZaccelerationInMS2 = calculateAcceleration(rawZ);
+
+	calculatedAcceleration.xAcc = getAcceleration(XaccelerationInMS2);
+	calculatedAcceleration.yAcc = getAcceleration(YaccelerationInMS2);
+	calculatedAcceleration.zAcc = getAcceleration(ZaccelerationInMS2);
+
+	return calculatedAcceleration;
 }
 
 AccelerationMS2 getAcceleration(const float floatingAcceleration)

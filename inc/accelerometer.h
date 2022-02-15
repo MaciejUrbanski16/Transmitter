@@ -17,8 +17,8 @@
 #define LIS3DSH_CTRL_REG3_ADDR               0x23
 #define LIS3DSH_CTRL_REG1_ADDR               0x21
 
-#define dataRate400Hz 0b00110111 //0x77 dataRate -> 400Hz and enable X Y Z axis
-#define antiAliasing  0b00010000 // 12,5Hz anti aliasing filter bandwith | full scale selection 4G
+#define dataRate400Hz    0b00110111 //0x77 dataRate -> 400Hz and enable X Y Z axis
+#define antiAliasing     0b00010000 // 12,5Hz anti aliasing filter bandwith | full scale selection 4G
 #define interruptsEnable 0b11101000
 #define sm1Control       0b00001001
 
@@ -42,7 +42,14 @@ extern I2C_HandleTypeDef hi2c1;
 
 void initAccelerometer(void);
 void waitTillAccelerometerIsInitialized(void);
+
+int readRawX();
+int readRawY();
+int readRawZ();
+
 float calculateAcceleration(const int rawAcceleration);
+
+XYZaxisAccelerationMS2 getCalculatedAcceleration();
 
 AccelerationMS2 getAcceleration(const float floatingAcceleration);
 

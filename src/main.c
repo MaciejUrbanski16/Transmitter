@@ -9,7 +9,7 @@
 //*/
 
 #include <stdio.h>
-#include <math.h>
+
 #include "stm32f4xx.h"
 #include "stm32f4xx_nucleo.h"
 #include "stm32f4xx_hal.h"
@@ -69,7 +69,10 @@ volatile int counterTimer4 = 0;
 static const uint16_t bufferAccSize = 1024;
 volatile int16_t bufferAccXaxis[1024];
 volatile int16_t bufferAccYaxis[1024];
-volatile int16_t bufferAccZaxis[1024];
+volatile int16_t DataAccZFromTimer[1024];
+volatile int incrementor = 0;
+
+volatile uint8_t DataAccZ1[2];
 
 void TIM2_IRQHandler(void)
 {
@@ -103,8 +106,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
 //		  rawY = (DataAccY[1]<<8) | DataAccY[0];
 //
-//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
-//		  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
+//		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZFromTimer, 2, 100);
+//		  DataAccZFromTimer[incrementor] = (DataAccZ[1]<<8) | DataAccZ[0];
+//		  incrementor++;
 //
 //		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);
 //		  rawT = (DataAccT[1]<<8) | DataAccT[0];
@@ -112,18 +116,40 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else if(htim->Instance == TIM4)
 	{
-		//HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	}
 }
 
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if(READ_FROM_AKCELEROMETER == currentI2CService)
+	{
+		uint8_t DataAccZ1Callback[2];
+		HAL_I2C_Mem_Read_IT(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ1Callback, 2);
+		DataAccZ1[0] = DataAccZ1Callback[0];
+		DataAccZ1[1] = DataAccZ1Callback[1];
+		 // HAL_I2C_Mem_Read_IT(&hi2c1, L3GD20H_ADDRESS, L3GD20H_X_L_A_MULTI_READ, 1, Data, 6);
+	}
+}
 
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if(READ_FROM_AKCELEROMETER == currentI2CService)
+	{
+		uint8_t DataAccZ1Callback[2];
+		HAL_I2C_Mem_Read_IT(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ1Callback, 2);
+		DataAccZ1[0] = DataAccZ1Callback[0];
+		DataAccZ1[1] = DataAccZ1Callback[1];
+		//  HAL_I2C_Mem_Read_IT(&hi2c1, L3GD20H_ADDRESS, L3GD20H_X_L_A_MULTI_READ, 1, Data, 6);
+	}
+}
 
 
 int main(void)
 {
 
 
-	SystemCoreClock = 8000000;	// taktowanie 8Mhz
+   	SystemCoreClock = 8000000;	// taktowanie 8Mhz
 
 	RCC_OscInitTypeDef RCC_OscInitStruct;
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -192,68 +218,36 @@ int main(void)
 
 
 
-
     initAccelerometer();
-
-	  lcd_init ();
-	  initHMC5883L();
-	  lcd_clear();
-
-
-	  char dataXY[16];
-	  char dataZ[16];
-	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)ACC_ADDRESS << 1, 10, 100) != HAL_OK)
-	  {
-		  uint8_t who = 8;
-		  char outWho[16];
-		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0F, 1, &who, 1, 100);
-		  sprintf(outWho, "AC2not %d", who);
-		  lcd_clear();
-		  lcd_put_cur(0, 0);
-		  lcd_send_string(outWho);
-
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  HAL_Delay(500);
-
-	  }
+	lcd_init ();
+	initHMC5883L();
+	lcd_clear();
 
 
-	  while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
-	  {
-		  lcd_clear();
-		  lcd_put_cur(0, 0);
-		  lcd_send_string ("HMCnotready");
+	char dataXY[16];
+	char dataZ[16];
 
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  HAL_Delay(500);
-
-	  }
+	waitTillAccelerometerIsInitialized();
+	waitTillMagnetometerIsInitialized();
 
 
 
-	  uint8_t dataM[6];
-	  int8_t DataY[2];
-	  int16_t Xaxis = 0;
-	  int16_t Yaxis = 0;
-	  int16_t Zaxis = 0;
+
+
+
+
 	  uint8_t DataAccX[2];
 	  uint8_t DataAccY[2];
 	  uint8_t DataAccZ[2];
 	  uint8_t DataAccT[2];
 	  int16_t rawX, rawY, rawZ, rawT;
-
+	  float degree;
 
 	  while (1)
 	  {
-		  HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x06, 1, dataM, 1, 100);
-		  if((dataM[0]&0x01)==1)
+		  if(1 == checkAvalibilityOfDataInRegister())
 		  {
-			  HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x00, 1, dataM, 6, 100);
-			  Xaxis= (dataM[1]<<8) | dataM[0];
-			  Yaxis= (dataM[3]<<8) | dataM[2];
-			  Zaxis= (dataM[5]<<8) | dataM[4];
-
-			  float degree = atan2f((float)Yaxis, (float)Xaxis)*(180/M_PI);
+			  degree = calculateAzimutWithDegree();
 			  HAL_Delay(50);
 			  lcd_clear ();
 			  lcd_put_cur(0, 0);
@@ -273,6 +267,7 @@ int main(void)
 			  rawY = (DataAccY[1]<<8) | DataAccY[0];
 
 			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
+			  //from interupt
 			  rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
 
 			  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0C, 1, DataAccT, 2, 100);

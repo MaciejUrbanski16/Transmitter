@@ -19,12 +19,23 @@
 
 #define status 0x09
 
-struct OrientationInSpace
+typedef struct
 {
-	uint16_t xAxis;
-	uint16_t yAxis;
-	uint16_t zAxis;
-};
+	int16_t xAxis;
+	int16_t yAxis;
+	int16_t zAxis;
+
+	float azimutInDegree;
+}OrientationInSpace;
 
 void initHMC5883L();
+
+void waitTillMagnetometerIsInitialized();
+
+uint8_t checkAvalibilityOfDataInRegister();
+
+float calculateAzimutWithDegree();
+
+OrientationInSpace readRawDataFromMagnetometer();
+
 #endif

@@ -4,6 +4,12 @@
 const float g = 9.803;
 const int rawGrawity = 5450;
 
+
+State accelerationDataReadingIndicator = NONE;
+
+RawAcceleration rawAccelerationBuffer[sizeOfBufferForRawData];
+uint16_t indexInRawAccelerationBuffer = 0;
+
 void initAccelerometer()
 {
 	uint8_t array[4];
@@ -20,6 +26,7 @@ void initAccelerometer()
 	HAL_I2C_Mem_Write(&hi2c1, ACC_ADDRESS << 1, LIS3DSH_CTRL_REG3_ADDR, 1, &array[2], 1, 100);
 	HAL_I2C_Mem_Write(&hi2c1, ACC_ADDRESS << 1, LIS3DSH_CTRL_REG1_ADDR, 1, &array[3], 1, 100);
 	//HAL_I2C_Mem_Write_IT(&hi2c1,ACC_ADDRESS << 1, LIS3DSH_CTRL_REG4_ADDR, 1, &array[0], 1);
+	accelerationDataReadingIndicator = READING_ACCELERATION;
 }
 
 void waitTillAccelerometerIsInitialized(void)
@@ -42,13 +49,20 @@ void waitTillAccelerometerIsInitialized(void)
 
 RawAcceleration readRawDataFromAccelerometer()
 {
-	RawAcceleration rawAcceleration;
-	uint8_t DataAcc[6];
-	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAcc, 6, 1);
-	rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0];
-	rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2];
-	rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4];
-	return rawAcceleration;
+	if(READING_ACCELERATION == accelerationDataReadingIndicator)
+	{
+		RawAcceleration rawAcceleration;
+		uint8_t DataAcc[6];
+		HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAcc, 6, 1);
+		rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0];
+		rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2];
+		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4];
+		return rawAcceleration;
+	}
+	else
+	{
+		//return RawAcceleration{0,0,0};
+	}
 }
 
 float calculateAcceleration(const int rawAcceleration)
@@ -59,17 +73,35 @@ float calculateAcceleration(const int rawAcceleration)
 XYZaxisAccelerationMS2 getCalculatedAcceleration()
 {
 	XYZaxisAccelerationMS2 calculatedAcceleration;
-	RawAcceleration rawAcceleration;
+	calculatedAcceleration.validAcceleration = 0;
 
-	rawAcceleration = readRawDataFromAccelerometer();
 
-	float xAccelerationInMS2 = calculateAcceleration(rawAcceleration.xRaw);
-	float yAccelerationInMS2 = calculateAcceleration(rawAcceleration.yRaw);
-	float zAccelerationInMS2 = calculateAcceleration(rawAcceleration.zRaw);
 
-	calculatedAcceleration.xAcc = getAcceleration(xAccelerationInMS2);
-	calculatedAcceleration.yAcc = getAcceleration(yAccelerationInMS2);
-	calculatedAcceleration.zAcc = getAcceleration(zAccelerationInMS2);
+	if(READING_ACCELERATION == accelerationDataReadingIndicator)
+	{
+		RawAcceleration rawAcceleration;
+		rawAcceleration = readRawDataFromAccelerometer();
+		rawAccelerationBuffer[indexInRawAccelerationBuffer] = rawAcceleration;
+		indexInRawAccelerationBuffer++;
+		if(indexInRawAccelerationBuffer == sizeOfBufferForRawData - 1)
+		{
+			indexInRawAccelerationBuffer = 0;
+		}
+	}
+	else if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator)
+	{
+		RawAcceleration averagedRawAcceleration = averageRawAcceleration();
+
+		float xAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.xRaw);
+		float yAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.yRaw);
+		float zAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.zRaw);
+
+
+		calculatedAcceleration.xAcc = getAcceleration(xAccelerationInMS2);
+		calculatedAcceleration.yAcc = getAcceleration(yAccelerationInMS2);
+		calculatedAcceleration.zAcc = getAcceleration(zAccelerationInMS2);
+		calculatedAcceleration.validAcceleration = 1;
+	}
 
 	return calculatedAcceleration;
 }
@@ -85,4 +117,27 @@ AccelerationMS2 getAcceleration(const float floatingAcceleration)
 	acceleration.floatingPart = floatingPart;
 
 	return acceleration;
+}
+
+RawAcceleration averageRawAcceleration()
+{
+	long int summedRawX = 0;
+	long int summedRawY = 0;
+	long int summedRawZ = 0;
+
+	uint16_t indexOfSum = 0;
+
+	for(indexOfSum = 0; indexOfSum < sizeOfBufferForRawData - 1; indexOfSum++)
+	{
+		summedRawX += rawAccelerationBuffer[indexOfSum].xRaw;
+		summedRawY += rawAccelerationBuffer[indexOfSum].yRaw;
+		summedRawZ += rawAccelerationBuffer[indexOfSum].zRaw;
+	}
+
+	RawAcceleration averagedRawAcceleration;
+	averagedRawAcceleration.xRaw = summedRawX / sizeOfBufferForRawData;
+	averagedRawAcceleration.yRaw = summedRawY / sizeOfBufferForRawData;
+	averagedRawAcceleration.zRaw = summedRawZ / sizeOfBufferForRawData;
+
+	return averagedRawAcceleration;
 }

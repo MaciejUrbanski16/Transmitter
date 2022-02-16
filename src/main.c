@@ -44,10 +44,10 @@ enum I2C_services
 	WRITE_TO_LCD = 0,
 	READ_FROM_MAGNETOMETER,
 	READ_FROM_AKCELEROMETER,
-	NONE
+	NONE_1
 };
 
-volatile int currentI2CService = NONE;
+volatile int currentI2CService = NONE_1;
 UART_HandleTypeDef huart2;
 
 I2C_HandleTypeDef hi2c1;
@@ -88,11 +88,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM2)
 	{
-
+		//the instance of timer2 is used to triger averaging maesured data
+		if(accelerationDataReadingIndicator == READING_ACCELERATION)
+		{
+			accelerationDataReadingIndicator = AVERAGING_ACCELERATION;
+			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+		}
 	}
 	else if(htim->Instance == TIM4)
 	{
-		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+
 	}
 }
 
@@ -191,7 +196,7 @@ int main(void)
 	initHMC5883L();
 	lcd_clear();
 
-	char dataXY[16];
+
 	char dataZ[16];
 
 	waitTillAccelerometerIsInitialized();
@@ -203,22 +208,29 @@ int main(void)
 	  {
 		  if(1 == checkAvalibilityOfDataInRegister())
 		  {
-			  degree = calculateAzimutWithDegree();
-
 			  XYZaxisAccelerationMS2 accel;
 			  accel = getCalculatedAcceleration();
+			  if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator && accel.validAcceleration == 1)
+			  {
+				  degree = calculateAzimutWithDegree();
 
-			  char acc2[16];
-			  HAL_Delay(50);
-			  lcd_clear ();
-			  lcd_put_cur(0, 0);
-			  sprintf(dataXY, "Degr:%d", (int)degree);
-			  lcd_send_string (dataXY);
-			  lcd_put_cur(1, 0);
-			  sprintf(acc2, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
-			  lcd_send_string(acc2);
+
+
+				  char acc2[16];
+				  char dataXY[16];
+				  HAL_Delay(50);
+				  lcd_clear ();
+				  lcd_put_cur(0, 0);
+				  sprintf(dataXY, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
+				  lcd_send_string (dataXY);
+				  lcd_put_cur(1, 0);
+				  sprintf(acc2, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
+				  lcd_send_string(acc2);
+
+				  accelerationDataReadingIndicator = READING_ACCELERATION;
+			  }
 		  }
-		  HAL_Delay(1000);
+		//  HAL_Delay(1000);
 	  }
 
 }
@@ -242,7 +254,7 @@ static void MX_I2C1_Init(void)
 static void MX_TIM2_Init(void)
 {
 	timer2.Instance = TIM2;
-	timer2.Init.Period = 500 - 1;
+	timer2.Init.Period = 16000 - 1;
 	timer2.Init.Prescaler = 8000 - 1;
 	timer2.Init.ClockDivision = 0;
 	timer2.Init.CounterMode = TIM_COUNTERMODE_UP;

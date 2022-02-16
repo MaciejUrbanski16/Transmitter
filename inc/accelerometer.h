@@ -22,8 +22,23 @@
 #define interruptsEnable 0b11101000
 #define sm1Control       0b00001001
 
+#define sizeOfBufferForRawData 100
+
 extern const float g;
 extern const int rawGrawity;
+
+
+typedef enum
+{
+	READING_ACCELERATION,
+	PRINTING_SENDING_ACCELERATION,
+	AVERAGING_ACCELERATION,
+	NONE
+}State;
+
+extern State accelerationDataReadingIndicator;
+
+//extern volatile State accelerationDataReadingIndicator;
 
 typedef struct
 {
@@ -43,6 +58,8 @@ typedef struct
 	AccelerationMS2 xAcc;
 	AccelerationMS2 yAcc;
 	AccelerationMS2 zAcc;
+
+	uint8_t validAcceleration;
 }XYZaxisAccelerationMS2;
 
 extern I2C_HandleTypeDef hi2c1;
@@ -57,6 +74,8 @@ float calculateAcceleration(const int rawAcceleration);
 XYZaxisAccelerationMS2 getCalculatedAcceleration();
 
 AccelerationMS2 getAcceleration(const float floatingAcceleration);
+
+RawAcceleration averageRawAcceleration();
 
 
 

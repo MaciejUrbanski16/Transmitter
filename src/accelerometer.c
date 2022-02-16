@@ -1,4 +1,5 @@
 #include "accelerometer.h"
+#include <stdio.h>
 
 const float g = 9.803;
 const int rawGrawity = 5450;
@@ -39,31 +40,15 @@ void waitTillAccelerometerIsInitialized(void)
 	  }
 }
 
-int readRawX()
+RawAcceleration readRawDataFromAccelerometer()
 {
-	uint8_t DataAccX[2];
-	int rawX;
-	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAccX, 2, 100);
-	rawX = (DataAccX[1]<<8) | DataAccX[0];
-	return rawX;
-}
-
-int readRawY()
-{
-	uint8_t DataAccY[2];
-	int rawY;
-	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2A, 1, DataAccY, 2, 100);
-	rawY = (DataAccY[1]<<8) | DataAccY[0];
-	return rawY;
-}
-
-int readRawZ()
-{
-	uint8_t DataAccZ[2];
-	int rawZ;
-	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ, 2, 100);
-	rawZ = (DataAccZ[1]<<8) | DataAccZ[0];
-	return rawZ;
+	RawAcceleration rawAcceleration;
+	uint8_t DataAcc[6];
+	HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAcc, 6, 1);
+	rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0];
+	rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2];
+	rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4];
+	return rawAcceleration;
 }
 
 float calculateAcceleration(const int rawAcceleration)
@@ -74,18 +59,17 @@ float calculateAcceleration(const int rawAcceleration)
 XYZaxisAccelerationMS2 getCalculatedAcceleration()
 {
 	XYZaxisAccelerationMS2 calculatedAcceleration;
+	RawAcceleration rawAcceleration;
 
-	int16_t rawX = readRawX();
-	int16_t rawY = readRawY();
-	int16_t rawZ = readRawZ();
+	rawAcceleration = readRawDataFromAccelerometer();
 
-	float XaccelerationInMS2 = calculateAcceleration(rawX);
-	float YaccelerationInMS2 = calculateAcceleration(rawY);
-	float ZaccelerationInMS2 = calculateAcceleration(rawZ);
+	float xAccelerationInMS2 = calculateAcceleration(rawAcceleration.xRaw);
+	float yAccelerationInMS2 = calculateAcceleration(rawAcceleration.yRaw);
+	float zAccelerationInMS2 = calculateAcceleration(rawAcceleration.zRaw);
 
-	calculatedAcceleration.xAcc = getAcceleration(XaccelerationInMS2);
-	calculatedAcceleration.yAcc = getAcceleration(YaccelerationInMS2);
-	calculatedAcceleration.zAcc = getAcceleration(ZaccelerationInMS2);
+	calculatedAcceleration.xAcc = getAcceleration(xAccelerationInMS2);
+	calculatedAcceleration.yAcc = getAcceleration(yAccelerationInMS2);
+	calculatedAcceleration.zAcc = getAcceleration(zAccelerationInMS2);
 
 	return calculatedAcceleration;
 }

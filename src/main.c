@@ -123,17 +123,12 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 int main(void)
 {
-
-
-   	SystemCoreClock = 8000000;	// taktowanie 8Mhz
+  	SystemCoreClock = 8000000;	// taktowanie 8Mhz
 
 	RCC_OscInitTypeDef RCC_OscInitStruct;
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
 	__PWR_CLK_ENABLE();
-
-
-
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
@@ -156,7 +151,6 @@ int main(void)
 
 	HAL_Init();
 	GPIO_InitTypeDef GPIO_InitStruct;
-
 
 	 __GPIOA_CLK_ENABLE();
 	 __GPIOB_CLK_ENABLE();
@@ -184,7 +178,7 @@ int main(void)
 	HAL_GPIO_Init(GPIOB, &gpio_I2C1_SDA_SCL);
 
 	__HAL_RCC_I2C1_CLK_ENABLE();
-	__HAL_RCC_TIM4_CLK_ENABLE();
+	__HAL_RCC_TIM2_CLK_ENABLE();
 	__HAL_RCC_TIM4_CLK_ENABLE();
 
 	MX_I2C1_Init();
@@ -192,13 +186,10 @@ int main(void)
 	MX_TIM2_Init();
     MX_USART2_UART_Init();
 
-
-
     initAccelerometer();
 	lcd_init ();
 	initHMC5883L();
 	lcd_clear();
-
 
 	char dataXY[16];
 	char dataZ[16];

@@ -27,6 +27,13 @@ extern const int rawGrawity;
 
 typedef struct
 {
+	int16_t xRaw;
+	int16_t yRaw;
+	int16_t zRaw;
+}RawAcceleration;
+
+typedef struct
+{
 	int integerPart;
 	int floatingPart;
 }AccelerationMS2;
@@ -43,9 +50,7 @@ extern I2C_HandleTypeDef hi2c1;
 void initAccelerometer(void);
 void waitTillAccelerometerIsInitialized(void);
 
-int readRawX();
-int readRawY();
-int readRawZ();
+RawAcceleration readRawDataFromAccelerometer();
 
 float calculateAcceleration(const int rawAcceleration);
 

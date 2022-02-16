@@ -45,14 +45,15 @@ float calculateAzimutWithDegree()
 {
 	OrientationInSpace orientationInSpace = readRawDataFromMagnetometer();
 
-//DEBUG
+//DEBUG;
 //	char acc2[16];
 //	  lcd_clear ();
 //	  lcd_put_cur(0, 0);
-//	  sprintf(acc2, "X:%dY:%dZ:%d", orientationInSpace.xAxis, orientationInSpace.yAxis, orientationInSpace.zAxis);
+//	  sprintf(acc2, "Deg:%d", (int)atan2f((float)orientationInSpace.yAxis, (float)orientationInSpace.xAxis)*(180.0f/M_PI));
 //	  lcd_send_string(acc2);
-//	  HAL_Delay(800);
-	return atan2f((float)orientationInSpace.yAxis, (float)orientationInSpace.xAxis)*(180.0/M_PI);
+//	  HAL_Delay(1000);
+	  //orientationInSpace.xAxis, orientationInSpace.yAxis, orientationInSpace.zAxis
+	return atan2f((float)orientationInSpace.yAxis, (float)orientationInSpace.xAxis)*(180.0f/M_PI);
 }
 
 OrientationInSpace readRawDataFromMagnetometer()

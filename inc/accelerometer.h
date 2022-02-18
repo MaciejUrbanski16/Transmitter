@@ -33,12 +33,13 @@ typedef enum
 	READING_ACCELERATION,
 	PRINTING_SENDING_ACCELERATION,
 	AVERAGING_ACCELERATION,
+	CALCULATION_OF_VELOCITY,
 	NONE
 }State;
 
 extern State accelerationDataReadingIndicator;
 
-//extern volatile State accelerationDataReadingIndicator;
+extern I2C_HandleTypeDef hi2c1;
 
 typedef struct
 {
@@ -62,9 +63,9 @@ typedef struct
 	uint8_t validAcceleration;
 }XYZaxisAccelerationMS2;
 
-extern I2C_HandleTypeDef hi2c1;
 
 void initAccelerometer(void);
+
 void waitTillAccelerometerIsInitialized(void);
 
 RawAcceleration readRawDataFromAccelerometer();
@@ -76,8 +77,5 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration();
 AccelerationMS2 getAcceleration(const float floatingAcceleration);
 
 RawAcceleration averageRawAcceleration();
-
-
-
 
 #endif /* INC_ACCELEROMETER_H_ */

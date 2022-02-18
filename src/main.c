@@ -23,31 +23,6 @@
 #include "magnetometer.h"
 #include "accelerometer.h"
 
-#define RS_PORT GPIOA
-#define RS_PIN GPIO_PIN_1
-#define RW_PORT GPIOA
-#define RW_PIN GPIO_PIN_2
-#define EN_PORT GPIOA
-#define EN_PIN GPIO_PIN_3
-#define D4_PORT GPIOA
-#define D4_PIN GPIO_PIN_4
-#define D5_PORT GPIOA
-#define D5_PIN GPIO_PIN_5
-#define D6_PORT GPIOA
-#define D6_PIN GPIO_PIN_6
-#define D7_PORT GPIOA
-#define D7_PIN GPIO_PIN_7
-
-
-enum I2C_services
-{
-	WRITE_TO_LCD = 0,
-	READ_FROM_MAGNETOMETER,
-	READ_FROM_AKCELEROMETER,
-	NONE_1
-};
-
-volatile int currentI2CService = NONE_1;
 UART_HandleTypeDef huart2;
 
 I2C_HandleTypeDef hi2c1;
@@ -58,21 +33,6 @@ void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
-
-//TIM2_IRQn
-
-
-int row=0;
-int col=0;
-volatile int counterTimer4 = 0;
-
-static const uint16_t bufferAccSize = 1024;
-volatile int16_t bufferAccXaxis[1024];
-volatile int16_t bufferAccYaxis[1024];
-volatile int16_t DataAccZFromTimer[1024];
-volatile int incrementor = 0;
-
-volatile uint8_t DataAccZ1[2];
 
 void TIM2_IRQHandler(void)
 {
@@ -100,31 +60,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	}
 }
-
-void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-	if(READ_FROM_AKCELEROMETER == currentI2CService)
-	{
-		uint8_t DataAccZ1Callback[2];
-		HAL_I2C_Mem_Read_IT(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ1Callback, 2);
-		DataAccZ1[0] = DataAccZ1Callback[0];
-		DataAccZ1[1] = DataAccZ1Callback[1];
-		 // HAL_I2C_Mem_Read_IT(&hi2c1, L3GD20H_ADDRESS, L3GD20H_X_L_A_MULTI_READ, 1, Data, 6);
-	}
-}
-
-void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-	if(READ_FROM_AKCELEROMETER == currentI2CService)
-	{
-		uint8_t DataAccZ1Callback[2];
-		HAL_I2C_Mem_Read_IT(&hi2c1, ACC_ADDRESS << 1, 0x2C, 1, DataAccZ1Callback, 2);
-		DataAccZ1[0] = DataAccZ1Callback[0];
-		DataAccZ1[1] = DataAccZ1Callback[1];
-		//  HAL_I2C_Mem_Read_IT(&hi2c1, L3GD20H_ADDRESS, L3GD20H_X_L_A_MULTI_READ, 1, Data, 6);
-	}
-}
-
 
 int main(void)
 {
@@ -197,12 +132,8 @@ int main(void)
 	lcd_clear();
 
 
-	char dataZ[16];
-
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
-
-	  float degree;
 
 	  while (1)
 	  {
@@ -210,27 +141,26 @@ int main(void)
 		  {
 			  XYZaxisAccelerationMS2 accel;
 			  accel = getCalculatedAcceleration();
+			  float degree;
+
 			  if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator && accel.validAcceleration == 1)
 			  {
 				  degree = calculateAzimutWithDegree();
-
-
-
-				  char acc2[16];
-				  char dataXY[16];
-				  HAL_Delay(50);
-				  lcd_clear ();
+				  char accelerationReadString[16];
+				  char magnitudeReadString[16];
+				  lcd_clear();
 				  lcd_put_cur(0, 0);
-				  sprintf(dataXY, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
-				  lcd_send_string (dataXY);
+				  sprintf(magnitudeReadString, "Degree %d", (int)degree);
+				  lcd_send_string (magnitudeReadString);
 				  lcd_put_cur(1, 0);
-				  sprintf(acc2, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
-				  lcd_send_string(acc2);
+//				  sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+//				  sprintf(accelerationReadString, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
+				  sprintf(accelerationReadString, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
+				  lcd_send_string(accelerationReadString);
 
 				  accelerationDataReadingIndicator = READING_ACCELERATION;
 			  }
 		  }
-		//  HAL_Delay(1000);
 	  }
 
 }
@@ -254,7 +184,7 @@ static void MX_I2C1_Init(void)
 static void MX_TIM2_Init(void)
 {
 	timer2.Instance = TIM2;
-	timer2.Init.Period = 16000 - 1;
+	timer2.Init.Period = 4000 - 1;
 	timer2.Init.Prescaler = 8000 - 1;
 	timer2.Init.ClockDivision = 0;
 	timer2.Init.CounterMode = TIM_COUNTERMODE_UP;

@@ -1,7 +1,13 @@
 #include "magnetometer.h"
+#include "accelerometer.h"
 #include <math.h>
 
 extern I2C_HandleTypeDef hi2c1;
+
+#define sizeOfBufferForRawMagnitude 100
+
+OrientationInSpace rawMagnitudeBuffer[sizeOfBufferForRawMagnitude];
+uint16_t rawMagnitudeBufferIndex = 0;
 
 void initHMC5883L()
 {
@@ -58,6 +64,7 @@ float calculateAzimutWithDegree()
 
 OrientationInSpace readRawDataFromMagnetometer()
 {
+
 	OrientationInSpace rawOrientationInSpace;
 	uint8_t dataM[6];
 

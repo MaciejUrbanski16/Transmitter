@@ -135,33 +135,33 @@ int main(void)
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
-	  while (1)
-	  {
-		  if(1 == checkAvalibilityOfDataInRegister())
-		  {
-			  XYZaxisAccelerationMS2 accel;
-			  accel = getCalculatedAcceleration();
-			  float degree;
+	while (1)
+	{
+		if(1 == checkAvalibilityOfDataInRegister())
+		{
+			XYZaxisAccelerationMS2 accel;
+		    accel = getCalculatedAcceleration();
+		    float degree;
 
-			  if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator && accel.validAcceleration == 1)
-			  {
-				  degree = calculateAzimutWithDegree();
-				  char accelerationReadString[16];
-				  char magnitudeReadString[16];
-				  lcd_clear();
-				  lcd_put_cur(0, 0);
-				  sprintf(magnitudeReadString, "Degree %d", (int)degree);
-				  lcd_send_string (magnitudeReadString);
-				  lcd_put_cur(1, 0);
-//				  sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
-//				  sprintf(accelerationReadString, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
-				  sprintf(accelerationReadString, "Z %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
-				  lcd_send_string(accelerationReadString);
+		    if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator && accel.validAcceleration == 1)
+		    {
+		     	degree = calculateAzimutWithDegree();
+				char accelerationReadString[16];
+			    char magnitudeReadString[16];
+			    lcd_clear();
+			    lcd_put_cur(0, 0);
+			    sprintf(magnitudeReadString, "Degree %d", (int)degree);
+			    lcd_send_string (magnitudeReadString);
+			    lcd_put_cur(1, 0);
+//			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    sprintf(accelerationReadString, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
+//			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
+			    lcd_send_string(accelerationReadString);
 
-				  accelerationDataReadingIndicator = READING_ACCELERATION;
-			  }
-		  }
-	  }
+			    accelerationDataReadingIndicator = READING_ACCELERATION;
+			}
+		}
+	}
 
 }
 
@@ -183,8 +183,10 @@ static void MX_I2C1_Init(void)
 
 static void MX_TIM2_Init(void)
 {
+	const uint16_t periodInMs = 1000;
+
 	timer2.Instance = TIM2;
-	timer2.Init.Period = 4000 - 1;
+	timer2.Init.Period = 2 * periodInMs - 1;
 	timer2.Init.Prescaler = 8000 - 1;
 	timer2.Init.ClockDivision = 0;
 	timer2.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -199,8 +201,10 @@ static void MX_TIM2_Init(void)
 
 static void MX_TIM4_Init(void)
 {
+	const uint16_t periodInMs = 100;
+
 	timer4.Instance = TIM4;
-	timer4.Init.Period = 200 - 1;
+	timer4.Init.Period = 2 * periodInMs - 1;
 	timer4.Init.Prescaler = 8000 - 1;
 	timer4.Init.ClockDivision = 0;
 	timer4.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -225,14 +229,14 @@ void MX_USART2_UART_Init(void)
 //	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
 
 
-	 huart2.Instance = USART2;
-	  huart2.Init.BaudRate = 115200;
-	  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-	  huart2.Init.StopBits = UART_STOPBITS_1;
-	  huart2.Init.Parity = UART_PARITY_NONE;
-	  huart2.Init.Mode = UART_MODE_TX_RX;
-	  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-	  HAL_UART_Init(&huart2);
+    huart2.Instance = USART2;
+    huart2.Init.BaudRate = 115200;
+    huart2.Init.WordLength = UART_WORDLENGTH_8B;
+    huart2.Init.StopBits = UART_STOPBITS_1;
+    huart2.Init.Parity = UART_PARITY_NONE;
+    huart2.Init.Mode = UART_MODE_TX_RX;
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+    HAL_UART_Init(&huart2);
 }
 

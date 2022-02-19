@@ -22,7 +22,7 @@
 #define interruptsEnable 0b11101000
 #define sm1Control       0b00001001
 
-#define sizeOfBufferForRawData 100
+#define sizeOfBufferForRawData 3
 
 extern const float g;
 extern const int rawGrawity;

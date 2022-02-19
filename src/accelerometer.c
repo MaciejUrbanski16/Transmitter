@@ -136,9 +136,9 @@ RawAcceleration averageRawAcceleration()
 	}
 
 	RawAcceleration averagedRawAcceleration;
-	averagedRawAcceleration.xRaw = summedRawX / sizeOfBufferForRawData;
-	averagedRawAcceleration.yRaw = summedRawY / sizeOfBufferForRawData;
-	averagedRawAcceleration.zRaw = summedRawZ / sizeOfBufferForRawData;
+	averagedRawAcceleration.xRaw = summedRawX / (sizeOfBufferForRawData - 1);
+	averagedRawAcceleration.yRaw = summedRawY / (sizeOfBufferForRawData - 1);
+	averagedRawAcceleration.zRaw = summedRawZ / (sizeOfBufferForRawData - 1);
 
 	return averagedRawAcceleration;
 }

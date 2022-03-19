@@ -22,17 +22,21 @@
 #include "i2c-lcd.h"
 #include "magnetometer.h"
 #include "accelerometer.h"
+#include "gsm_transmission.h"
 
 UART_HandleTypeDef huart2;
 
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
+ConnectionCommands connectionCommands;
 
 
 void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
+
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 
 void TIM2_IRQHandler(void)
 {
@@ -126,6 +130,7 @@ int main(void)
 	MX_TIM2_Init();
     MX_USART2_UART_Init();
 
+    initConnectionCommands(&connectionCommands);
     initAccelerometer();
 	lcd_init ();
 	initHMC5883L();
@@ -154,13 +159,15 @@ int main(void)
 			    lcd_send_string (magnitudeReadString);
 			    lcd_put_cur(1, 0);
 //			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
-			    sprintf(accelerationReadString, "Y %d.%d", accel.yAcc.integerPart, accel.yAcc.floatingPart);
+			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
 //			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
 			    lcd_send_string(accelerationReadString);
 
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
+		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
+		//HAL_UART_Transmit_IT(&huart2, Data, size);
 	}
 
 }
@@ -220,15 +227,6 @@ static void MX_TIM4_Init(void)
 
 void MX_USART2_UART_Init(void)
 {
-//	huart2.Instance = USART2;
-//	huart2.Init.BaudRate = 115200;
-//	huart2.Init.WordLength = UART_WORDLENGTH_8B;
-//	huart2.Init.StopBits = UART_STOPBITS_1;
-//	huart2.Init.Parity = UART_PARITY_NONE;
-//	huart2.Init.Mode = UART_MODE_TX_RX;
-//	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-
-
     huart2.Instance = USART2;
     huart2.Init.BaudRate = 115200;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;

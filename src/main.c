@@ -184,11 +184,17 @@ int main(void)
 		//HAL_UART_Transmit_IT(&huart2, Data, size);
 		if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 200) == HAL_OK)
 		{
-
+//			char nok[] = "HAL_NOK!";
+//		    lcd_clear();
+//		    lcd_put_cur(0, 0);
+//		    lcd_send_string(nok);
 		}
 		else
 		{
-
+			char nok[] = "HAL_NOK!";
+		    lcd_clear();
+		    lcd_put_cur(0, 0);
+		    lcd_send_string(nok);
 		}
 	}
 

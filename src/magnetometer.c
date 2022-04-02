@@ -51,27 +51,20 @@ float calculateAzimutWithDegree()
 {
 	OrientationInSpace orientationInSpace = readRawDataFromMagnetometer();
 
-//DEBUG;
-//	char acc2[16];
-//	  lcd_clear ();
-//	  lcd_put_cur(0, 0);
-//	  sprintf(acc2, "Deg:%d", (int)atan2f((float)orientationInSpace.yAxis, (float)orientationInSpace.xAxis)*(180.0f/M_PI));
-//	  lcd_send_string(acc2);
-//	  HAL_Delay(1000);
-	  //orientationInSpace.xAxis, orientationInSpace.yAxis, orientationInSpace.zAxis
-	return atan2f((float)orientationInSpace.yAxis, (float)orientationInSpace.xAxis)*(180.0f/M_PI);
+	return atan2f((float)orientationInSpace.yAxis,
+				  (float)orientationInSpace.xAxis)*(180.0f/M_PI);
 }
 
 OrientationInSpace readRawDataFromMagnetometer()
 {
 
 	OrientationInSpace rawOrientationInSpace;
-	uint8_t dataM[6];
+	uint8_t bufferForMeasurement[6];
 
-	HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x00, 1, dataM, 6, 100);
-	rawOrientationInSpace.xAxis = (dataM[1]<<8) | dataM[0];
-	rawOrientationInSpace.yAxis = (dataM[3]<<8) | dataM[2];
-	rawOrientationInSpace.zAxis = (dataM[5]<<8) | dataM[4];
+	HAL_I2C_Mem_Read(&hi2c1, HMC5883L_ADRESS, 0x00, 1, bufferForMeasurement, 6, 100);
+	rawOrientationInSpace.xAxis = (bufferForMeasurement[1]<<8) | bufferForMeasurement[0];
+	rawOrientationInSpace.yAxis = (bufferForMeasurement[3]<<8) | bufferForMeasurement[2];
+	rawOrientationInSpace.zAxis = (bufferForMeasurement[5]<<8) | bufferForMeasurement[4];
 
 	return rawOrientationInSpace;
 }

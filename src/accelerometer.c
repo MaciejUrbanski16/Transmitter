@@ -3,7 +3,7 @@
 
 const float g = 9.803;
 const int rawGrawity = 5450;
-
+extern UART_HandleTypeDef huart2;
 
 State accelerationDataReadingIndicator = NONE;
 
@@ -27,6 +27,11 @@ void initAccelerometer()
 	HAL_I2C_Mem_Write(&hi2c1, ACC_ADDRESS << 1, LIS3DSH_CTRL_REG1_ADDR, 1, &array[3], 1, 100);
 	//HAL_I2C_Mem_Write_IT(&hi2c1,ACC_ADDRESS << 1, LIS3DSH_CTRL_REG4_ADDR, 1, &array[0], 1);
 	accelerationDataReadingIndicator = READING_ACCELERATION;
+	char OK[] = "initACC READ";
+	lcd_clear();
+	lcd_put_cur(0, 0);
+	lcd_send_string(OK);
+	HAL_Delay(1000);
 }
 
 void waitTillAccelerometerIsInitialized(void)
@@ -54,14 +59,11 @@ RawAcceleration readRawDataFromAccelerometer()
 		RawAcceleration rawAcceleration;
 		uint8_t DataAcc[6];
 		HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAcc, 6, 1);
-		rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0];
-		rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2];
-		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4];
+		rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0]; //0x28 0x29
+		rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2]; //0x2A 0x2B
+		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4]; //0x2C 0x2D
+
 		return rawAcceleration;
-	}
-	else
-	{
-		//return RawAcceleration{0,0,0};
 	}
 }
 

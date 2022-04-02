@@ -8,6 +8,8 @@
 #ifndef INC_GSM_TRANSMISSION_H_
 #define INC_GSM_TRANSMISSION_H_
 
+#include "stm32f4xx_hal.h"
+
 typedef struct
 {
 	char AT[4];
@@ -22,7 +24,8 @@ typedef struct
 
 	char AT_CIPSTART[40];   // THIS CAN BE VARIOUS //init of connection with ip and port AT+CIPSTART="TCP","IP server adres","PORT"
 	char AT_CIPSEND[12];    // send message in particualr port to particualr ip
-	char dataToSend[100];   // THIS CAN BE VARIOUS
+	uint8_t dataToSend[100];   // THIS CAN BE VARIOUS
+	uint8_t receivedData[100];  // THIS CAN BE VARIOUS
 	char AT_CIPCLOSE[11];   // closing connection
 	int sendCommand;        // 0x1A
 

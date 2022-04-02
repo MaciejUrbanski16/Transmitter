@@ -10,6 +10,16 @@
 
 #include "stm32f4xx_hal.h"
 
+typedef enum
+{
+	AT =0,
+	CWJAP,
+	CIPMUX,
+	CIPSTART,
+	CIPSEND,
+	CIPCLOSE
+}CurrentATcommand;
+
 typedef struct
 {
 	uint8_t AT[4];

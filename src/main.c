@@ -30,7 +30,10 @@ UART_HandleTypeDef huart2;
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
 ConnectionCommands connectionCommands;
+
 SendingCommands sendingCommands;
+CurrentATcommand currentAtCommand = AT;
+uint8_t data[60] ="hello\r\n";
 
 
 void MX_USART2_UART_Init(void);
@@ -38,7 +41,24 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 
-//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART2)
+	{
+		uint8_t received[20];
+		uint16_t size = 0;
+		size = sprintf(data, "Odebrana wiadomosc: %s\n\r",received);
+		if (received[0] == sendingCommands.responseAT[0] && currentAtCommand == AT)
+		{
+			//HAL_UART_Transmit(&huart2, data, sizeof(data), 20);
+			//HAL_UART_Receive_IT(&huart2, received, 2);
+		}
+		if(HAL_UART_Transmit(&huart2, data, sizeof(data), 20) == HAL_OK)
+		{
+			HAL_UART_Receive_IT(&huart2, received, 2);
+		}
+	}
+}
 
 void TIM2_IRQHandler(void)
 {
@@ -154,6 +174,8 @@ int main(void)
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
+	int counterOfTx=0;
+
 	while (1)
 	{
 		if(1 == checkAvalibilityOfDataInRegister())
@@ -182,12 +204,11 @@ int main(void)
 		}
 		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
 		//HAL_UART_Transmit_IT(&huart2, Data, size);
-		if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 200) == HAL_OK)
+
+
+		if(HAL_UART_Transmit(&huart2, data, sizeof(data), 200) == HAL_OK)
 		{
-//			char nok[] = "HAL_NOK!";
-//		    lcd_clear();
-//		    lcd_put_cur(0, 0);
-//		    lcd_send_string(nok);
+			HAL_UART_Receive_IT(&huart2, data, 2);
 		}
 		else
 		{

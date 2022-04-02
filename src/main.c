@@ -45,17 +45,29 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == USART2)
 	{
-		uint8_t received[20];
-		uint16_t size = 0;
-		size = sprintf(data, "Odebrana wiadomosc: %s\n\r",received);
-		if (received[0] == sendingCommands.responseAT[0] && currentAtCommand == AT)
+		switch(currentAtCommand)
 		{
-			//HAL_UART_Transmit(&huart2, data, sizeof(data), 20);
-			//HAL_UART_Receive_IT(&huart2, received, 2);
-		}
-		if(HAL_UART_Transmit(&huart2, data, sizeof(data), 20) == HAL_OK)
-		{
-			HAL_UART_Receive_IT(&huart2, received, 2);
+		case AT:
+			currentAtCommand = RESPONSE_AT_RECEIVED;
+			break;
+		case CWJAP:
+			currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+			break;
+		case CIPMUX:
+			currentAtCommand = RESPONSE_CIPMUX_RECEIVED;
+			break;
+		case CIPSTART:
+			currentAtCommand = RESPONSE_CIPSTART_RECEIVED;
+			break;
+		case CIPSEND:
+			currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
+			break;
+//		case SEND_DATA:
+//			sendDataToServer();
+//			currentAtCommand = CIPCLOSE;
+		case CIPCLOSE:
+			currentAtCommand = RESPONSE_CIPCLOSE_RECEIVED;
+			break;
 		}
 	}
 }
@@ -195,8 +207,8 @@ int main(void)
 			    lcd_send_string (magnitudeReadString);
 			    lcd_put_cur(1, 0);
 //			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
-			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
-//			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
+//			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
+			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
 			    lcd_send_string(accelerationReadString);
 
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
@@ -205,17 +217,37 @@ int main(void)
 		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
 		//HAL_UART_Transmit_IT(&huart2, Data, size);
 
+		switch(currentAtCommand)
+		{
+		case AT:
+			if(1 == receiveATresponse(&sendingCommands))
+			{
 
-		if(HAL_UART_Transmit(&huart2, data, sizeof(data), 200) == HAL_OK)
-		{
-			HAL_UART_Receive_IT(&huart2, data, 2);
-		}
-		else
-		{
-			char nok[] = "HAL_NOK!";
-		    lcd_clear();
-		    lcd_put_cur(0, 0);
-		    lcd_send_string(nok);
+			}
+			break;
+		case CWJAP:
+			if(1 == receiveCWJAPresponse(&sendingCommands))
+			{
+
+			}
+			break;
+		case CIPMUX:
+			if(1 == receiveCIPMUXresponse(&sendingCommands))
+			{
+
+			}
+			break;
+		case CIPSTART:
+			if(1 == receiveCIPSTARTresponse(&sendingCommands))
+			{
+
+			}
+			break;
+		case SEND_DATA:
+			sendDataToServer();
+			break;
+		default:
+			break;
 		}
 	}
 

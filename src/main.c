@@ -23,12 +23,14 @@
 #include "magnetometer.h"
 #include "accelerometer.h"
 #include "gsm_transmission.h"
+#include "esp8266_transmission.h"
 
 UART_HandleTypeDef huart2;
 
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
 ConnectionCommands connectionCommands;
+SendingCommands sendingCommands;
 
 
 void MX_USART2_UART_Init(void);
@@ -105,11 +107,22 @@ int main(void)
 	 __HAL_RCC_GPIOA_CLK_ENABLE();
 	 __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    GPIO_InitStruct.Pin = GPIO_PIN_1| GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7/*|GPIO_PIN_8*/;
+    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7/*|GPIO_PIN_8*/;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	GPIO_InitTypeDef gpio_I2C1_SDA_SCL;
@@ -131,6 +144,7 @@ int main(void)
     MX_USART2_UART_Init();
 
     initConnectionCommands(&connectionCommands);
+    initSendingCommands(&sendingCommands);
     initAccelerometer();
 	lcd_init ();
 	initHMC5883L();
@@ -168,6 +182,14 @@ int main(void)
 		}
 		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
 		//HAL_UART_Transmit_IT(&huart2, Data, size);
+		if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 200) == HAL_OK)
+		{
+
+		}
+		else
+		{
+
+		}
 	}
 
 }
@@ -228,7 +250,7 @@ static void MX_TIM4_Init(void)
 void MX_USART2_UART_Init(void)
 {
     huart2.Instance = USART2;
-    huart2.Init.BaudRate = 115200;
+    huart2.Init.BaudRate = 9600;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;
     huart2.Init.StopBits = UART_STOPBITS_1;
     huart2.Init.Parity = UART_PARITY_NONE;

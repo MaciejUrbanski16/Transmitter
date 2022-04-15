@@ -12,19 +12,19 @@
 
 typedef enum
 {
-	AT =0,
-	RESPONSE_AT_RECEIVED,
-	CWJAP,
-	RESPONSE_CWJAP_RECEIVED,
-	CIPMUX,
-	RESPONSE_CIPMUX_RECEIVED,
-	CIPSTART,
-	RESPONSE_CIPSTART_RECEIVED,
-	CIPSEND,
-	RESPONSE_CIPSEND_RECEIVED,
-	SEND_DATA,
-	CIPCLOSE,
-	RESPONSE_CIPCLOSE_RECEIVED
+	AT = 0,
+	RESPONSE_AT_RECEIVED = 1,
+	CWJAP = 2,
+	RESPONSE_CWJAP_RECEIVED = 3,
+	CIPMUX = 4,
+	RESPONSE_CIPMUX_RECEIVED = 5,
+	CIPSTART = 6,
+	RESPONSE_CIPSTART_RECEIVED = 7,
+	CIPSEND = 8,
+	RESPONSE_CIPSEND_RECEIVED = 9,
+	SEND_DATA = 10,
+	CIPCLOSE = 11,
+	RESPONSE_CIPCLOSE_RECEIVED = 12
 }CurrentATcommand;
 
 typedef struct
@@ -50,9 +50,10 @@ typedef struct
 	uint8_t responseAT_CIPCLOSE[8];
 }SendingCommands;
 
+void debug(int state);
+
 void initSendingCommands(SendingCommands *sendingCommands);
 
-void sendDataToServer();
 
 uint8_t receiveATresponse(SendingCommands *sendingCommands);
 uint8_t checkResponseATCorrectness(SendingCommands *sendingCommands);

@@ -143,22 +143,37 @@ void initSendingCommands(SendingCommands *sendingCommands)
 
 }
 
-void sendDataToServer()
-{
 
+void debug(int state)
+{
+	char stateToPrint[20];
+	sprintf(stateToPrint, "Current state: %d\r\n", state);
+	if(HAL_UART_Transmit(&huart2, stateToPrint, sizeof(stateToPrint), 50) != HAL_OK)
+	{
+		char nok[20];
+		sprintf(nok, "HAL_NOK ST: %d\r\n", state);
+	    lcd_clear();
+	    lcd_put_cur(0, 0);
+	    lcd_send_string(nok);
+	    //return 1;
+	}
 }
 
 uint8_t receiveATresponse(SendingCommands *sendingCommands)
 {
-	HAL_UART_Receive_IT(&huart2, sendingCommands->responseAT, 6);
-	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CIPSTART, sizeof(sendingCommands->AT_CIPSTART), 100) != HAL_OK)
+
+	//debug(currentAtCommand);
+
+	if(HAL_UART_Transmit(&huart2, sendingCommands->AT, sizeof(sendingCommands->AT), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK AT!";
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
+	HAL_UART_Receive_IT(&huart2, sendingCommands->responseAT, 6);
 	if(currentAtCommand == RESPONSE_AT_RECEIVED)
 	{
 		if(checkResponseATCorrectness(sendingCommands))
@@ -184,6 +199,7 @@ uint8_t receiveCWJAPresponse(SendingCommands *sendingCommands)
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
 	if(currentAtCommand == RESPONSE_CWJAP_RECEIVED)
@@ -211,6 +227,7 @@ uint8_t receiveCIPMUXresponse(SendingCommands *sendingCommands)
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
 	if(currentAtCommand == RESPONSE_CIPMUX_RECEIVED)
@@ -238,6 +255,7 @@ uint8_t receiveCIPSTARTresponse(SendingCommands *sendingCommands)
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
 	if(currentAtCommand == RESPONSE_CIPSTART_RECEIVED)
@@ -265,6 +283,7 @@ uint8_t receiveCIPSENDresponse(SendingCommands *sendingCommands)
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
 	if(currentAtCommand == RESPONSE_CIPSEND_RECEIVED)
@@ -292,6 +311,7 @@ uint8_t receiveCIPCLOSEresponse(SendingCommands *sendingCommands)
 	    lcd_clear();
 	    lcd_put_cur(0, 0);
 	    lcd_send_string(nok);
+	    HAL_Delay(2000);
 	    return 1;
 	}
 	if(currentAtCommand == RESPONSE_CIPCLOSE_RECEIVED)

@@ -72,6 +72,78 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	}
 }
 
+void sendDataToServer(float azimuth, XYZaxisAccelerationMS2 accel)
+{
+	char rcvd_data[10];
+	HAL_UART_Receive_IT(&huart2, &rcvd_data, 10);
+	switch (currentAtCommand)
+	{
+	case RESPONSE_AT_RECEIVED:
+		currentAtCommand = CWJAP;
+		break;
+	case RESPONSE_CWJAP_RECEIVED:
+		currentAtCommand = CIPMUX;
+		break;
+	case RESPONSE_CIPMUX_RECEIVED:
+		currentAtCommand = CIPSTART;
+		break;
+	case RESPONSE_CIPSTART_RECEIVED:
+		currentAtCommand = CIPSEND;
+		break;
+	case RESPONSE_CIPSEND_RECEIVED:
+		//sending...
+		currentAtCommand = CIPSTART;
+		break;
+	}
+
+
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART2)
+	{
+//		char stateToPrint[30];
+//		sprintf(stateToPrint, "TxCallba state: %d\r\n", currentAtCommand);
+//		if(HAL_UART_Transmit(&huart2, stateToPrint, sizeof(stateToPrint), 80) != HAL_OK)
+//		{
+//			char nok[20];
+//			sprintf(nok, "HAL_NOK ST: %d\r\n", currentAtCommand);
+//		    lcd_clear();
+//		    lcd_put_cur(0, 0);
+//		    lcd_send_string(nok);
+//		    HAL_Delay(5000);
+//		    //return 1;
+//		}
+
+		switch(currentAtCommand)
+		{
+		case RESPONSE_AT_RECEIVED:
+			currentAtCommand = CWJAP;
+			break;
+		case RESPONSE_CWJAP_RECEIVED:
+			currentAtCommand = CIPMUX;
+			break;
+		case RESPONSE_CIPMUX_RECEIVED:
+			currentAtCommand = CIPSTART;
+			break;
+		case RESPONSE_CIPSTART_RECEIVED:
+			currentAtCommand = CIPSEND;
+			break;
+		case RESPONSE_CIPSEND_RECEIVED:
+			//currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
+			break;
+//		case SEND_DATA:
+//			sendDataToServer();
+//			currentAtCommand = CIPCLOSE;
+		case RESPONSE_CIPCLOSE_RECEIVED:
+			currentAtCommand = AT;
+			break;
+		}
+	}
+}
+
+
 void TIM2_IRQHandler(void)
 {
   HAL_TIM_IRQHandler(&timer2);
@@ -211,44 +283,78 @@ int main(void)
 			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
 			    lcd_send_string(accelerationReadString);
 
+				char measurements[70];
+				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d \r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
+						accel.yAcc.integerPart, accel.yAcc.floatingPart, accel.zAcc.integerPart, accel.zAcc.floatingPart);
+//				if(HAL_UART_Transmit(&huart2, measurements, sizeof(measurements), 120) != HAL_OK)
+//				{
+//					char nok[] = "HAL_NOK meas!";
+//				    lcd_clear();
+//				    lcd_put_cur(0, 0);
+//				    lcd_send_string(nok);
+//				    HAL_Delay(5000);
+//				    //return 1;
+//				}
+				if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 100) != HAL_OK)
+				{
+					char nok[] = "HAL_NOK AT!";
+				    lcd_clear();
+				    lcd_put_cur(0, 0);
+				    lcd_send_string(nok);
+				    HAL_Delay(2000);
+				    return 1;
+				}
+				char rec[20];
+				if(HAL_UART_Receive(&huart2, rec, 6, 100) != HAL_OK)
+				{
+					char nok[] = "HAL_NOK ATR!";
+				    lcd_clear();
+				    lcd_put_cur(0, 0);
+				    lcd_send_string(nok);
+				    HAL_Delay(2000);
+				    return 1;
+				}
+
+				sendDataToServer(degree, accel);
+
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
 		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
-		//HAL_UART_Transmit_IT(&huart2, Data, size);
 
-		switch(currentAtCommand)
-		{
-		case AT:
-			if(1 == receiveATresponse(&sendingCommands))
-			{
 
-			}
-			break;
-		case CWJAP:
-			if(1 == receiveCWJAPresponse(&sendingCommands))
-			{
-
-			}
-			break;
-		case CIPMUX:
-			if(1 == receiveCIPMUXresponse(&sendingCommands))
-			{
-
-			}
-			break;
-		case CIPSTART:
-			if(1 == receiveCIPSTARTresponse(&sendingCommands))
-			{
-
-			}
-			break;
-		case SEND_DATA:
-			sendDataToServer();
-			break;
-		default:
-			break;
-		}
+//		switch(currentAtCommand)
+//		{
+//		case AT:
+//			if(1 == receiveATresponse(&sendingCommands))
+//			{
+//
+//			}
+//			break;
+//		case CWJAP:
+//			if(1 == receiveCWJAPresponse(&sendingCommands))
+//			{
+//
+//			}
+//			break;
+//		case CIPMUX:
+//			if(1 == receiveCIPMUXresponse(&sendingCommands))
+//			{
+//
+//			}
+//			break;
+//		case CIPSTART:
+//			if(1 == receiveCIPSTARTresponse(&sendingCommands))
+//			{
+//
+//			}
+//			break;
+//		case SEND_DATA:
+//			sendDataToServer();
+//			break;
+//		default:
+//			break;
+//		}
 	}
 
 }

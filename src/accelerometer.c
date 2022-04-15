@@ -89,7 +89,6 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration()
 		{
 			indexInRawAccelerationBuffer = 0;
 		}
-		//here have to be implemented calculation of velocity
 	}
 	else if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator)
 	{

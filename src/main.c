@@ -25,7 +25,7 @@
 #include "gsm_transmission.h"
 #include "esp8266_transmission.h"
 
-UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart2, huart1;
 
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
@@ -35,7 +35,7 @@ SendingCommands sendingCommands;
 CurrentATcommand currentAtCommand = AT;
 uint8_t data[60] ="hello\r\n";
 
-
+void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
@@ -101,7 +101,7 @@ void sendDataToServer(float azimuth, XYZaxisAccelerationMS2 accel)
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == USART2)
+	if(huart->Instance == USART1)
 	{
 //		char stateToPrint[30];
 //		sprintf(stateToPrint, "TxCallba state: %d\r\n", currentAtCommand);
@@ -206,6 +206,7 @@ int main(void)
 	 __GPIOB_CLK_ENABLE();
 	 __GPIOC_CLK_ENABLE();
 	 __USART2_CLK_ENABLE();
+	 __USART1_CLK_ENABLE();
 
 	 __HAL_RCC_GPIOD_CLK_ENABLE();
 	 __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -229,6 +230,18 @@ int main(void)
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_10;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+
 	GPIO_InitTypeDef gpio_I2C1_SDA_SCL;
 	gpio_I2C1_SDA_SCL.Pin = /*GPIO_PIN_4 |*/GPIO_PIN_8 | GPIO_PIN_9;
 	gpio_I2C1_SDA_SCL.Mode = GPIO_MODE_AF_OD;
@@ -246,6 +259,7 @@ int main(void)
 	MX_TIM4_Init();
 	MX_TIM2_Init();
     MX_USART2_UART_Init();
+    MX_USART1_UART_Init();
 
     initConnectionCommands(&connectionCommands);
     initSendingCommands(&sendingCommands);
@@ -304,16 +318,22 @@ int main(void)
 				    HAL_Delay(2000);
 				    return 1;
 				}
-				char rec[20];
-				if(HAL_UART_Receive(&huart2, rec, 6, 100) != HAL_OK)
+				char rec[6];
+				if(HAL_UART_Receive_IT(&huart2, rec, 6) != HAL_OK)
 				{
 					char nok[] = "HAL_NOK ATR!";
 				    lcd_clear();
 				    lcd_put_cur(0, 0);
 				    lcd_send_string(nok);
 				    HAL_Delay(2000);
-				    return 1;
+				   // return 1;
 				}
+				char st[6];
+				sprintf(st, "Sta:%d", currentAtCommand);
+			    lcd_clear();
+			    lcd_put_cur(0, 0);
+			    lcd_send_string(st);
+			    HAL_Delay(2000);
 
 				sendDataToServer(degree, accel);
 
@@ -415,7 +435,7 @@ static void MX_TIM4_Init(void)
 void MX_USART2_UART_Init(void)
 {
     huart2.Instance = USART2;
-    huart2.Init.BaudRate = 9600;
+    huart2.Init.BaudRate = 115200;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;
     huart2.Init.StopBits = UART_STOPBITS_1;
     huart2.Init.Parity = UART_PARITY_NONE;
@@ -425,3 +445,15 @@ void MX_USART2_UART_Init(void)
     HAL_UART_Init(&huart2);
 }
 
+void MX_USART1_UART_Init(void)
+{
+    huart2.Instance = USART1;
+    huart2.Init.BaudRate = 115200;
+    huart2.Init.WordLength = UART_WORDLENGTH_8B;
+    huart2.Init.StopBits = UART_STOPBITS_1;
+    huart2.Init.Parity = UART_PARITY_NONE;
+    huart2.Init.Mode = UART_MODE_TX_RX;
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+    HAL_UART_Init(&huart1);
+}

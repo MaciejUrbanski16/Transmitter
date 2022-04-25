@@ -152,9 +152,9 @@ void debug(int state)
 	{
 		char nok[20];
 		sprintf(nok, "HAL_NOK ST: %d\r\n", state);
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    //return 1;
 	}
 }
@@ -167,9 +167,9 @@ uint8_t receiveATresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT, sizeof(sendingCommands->AT), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK AT!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}
@@ -196,9 +196,9 @@ uint8_t receiveCWJAPresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CWJAP, sizeof(sendingCommands->AT_CWJAP), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK CWJAP!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}
@@ -224,9 +224,9 @@ uint8_t receiveCIPMUXresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CIPMUX, sizeof(sendingCommands->AT_CIPMUX), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK CIPMUX!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}
@@ -252,9 +252,9 @@ uint8_t receiveCIPSTARTresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CIPSTART, sizeof(sendingCommands->AT_CIPSTART), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK CIPSTART!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}
@@ -280,9 +280,9 @@ uint8_t receiveCIPSENDresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CIPSEND, sizeof(sendingCommands->AT_CIPSEND), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK when CIPSEND!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}
@@ -308,9 +308,9 @@ uint8_t receiveCIPCLOSEresponse(SendingCommands *sendingCommands)
 	if(HAL_UART_Transmit(&huart2, sendingCommands->AT_CIPCLOSE, sizeof(sendingCommands->AT_CIPCLOSE), 100) != HAL_OK)
 	{
 		char nok[] = "HAL_NOK when CIPCLOSE!";
-	    lcd_clear();
-	    lcd_put_cur(0, 0);
-	    lcd_send_string(nok);
+	    lcdClear();
+	    lcdSetCursor(0, 0);
+	    lcdSendString(nok);
 	    HAL_Delay(2000);
 	    return 1;
 	}

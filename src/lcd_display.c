@@ -1,12 +1,6 @@
+#include "lcd_display.h"
 
-/** Put this in the src folder **/
-
-#include "i2c-lcd.h"
-  // change your handler here accordingly
-
-//#define SLAVE_ADDRESS_LCD 0x4E // change this according to ur setup
-
-void lcd_send_cmd (char cmd)
+void lcdSendComd (char cmd)
 {
   char data_u, data_l;
 	uint8_t data_t[4];
@@ -20,7 +14,7 @@ void lcd_send_cmd (char cmd)
 	HAL_Delay(300);
 }
 
-void lcd_send_data (char data)
+void lcdSendData (char data)
 {
 	char data_u, data_l;
 	uint8_t data_t[4];
@@ -33,16 +27,16 @@ void lcd_send_data (char data)
 	HAL_I2C_Master_Transmit (&hi2c1, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
 }
 
-void lcd_clear (void)
+void lcdClear (void)
 {
-	lcd_send_cmd (0x80);
+	lcdSendComd (0x80);
 	for (int i=0; i<70; i++)
 	{
-		lcd_send_data (' ');
+		lcdSendData (' ');
 	}
 }
 
-void lcd_put_cur(int row, int col)
+void lcdSetCursor(int row, int col)
 {
     switch (row)
     {
@@ -54,46 +48,46 @@ void lcd_put_cur(int row, int col)
             break;
     }
 
-    lcd_send_cmd (col);
+    lcdSendComd (col);
 }
 
 
-void lcd_init (void)
+void lcdInit (void)
 {
 	// 4 bit initialisation
 	HAL_Delay(50);  // wait for >40ms
-	lcd_send_cmd (0x30);
+	lcdSendComd (0x30);
 	HAL_Delay(50);  // wait for >4.1ms
-	lcd_send_cmd (0x30);
+	lcdSendComd (0x30);
 	HAL_Delay(10);  // wait for >100us
-	lcd_send_cmd (0x30);
+	lcdSendComd (0x30);
 	HAL_Delay(10);
-	lcd_send_cmd (0x20);  // 4bit mode
+	lcdSendComd (0x20);  // 4bit mode
 	HAL_Delay(10);
 
   // dislay initialisation
-	lcd_send_cmd (0x28); // Function set --> DL=0 (4 bit mode), N = 1 (2 line display) F = 0 (5x8 characters)
+	lcdSendComd (0x28); // Function set --> DL=0 (4 bit mode), N = 1 (2 line display) F = 0 (5x8 characters)
 	HAL_Delay(10);
-	lcd_send_cmd (0x08); //Display on/off control --> D=0,C=0, B=0  ---> display off
+	lcdSendComd (0x08); //Display on/off control --> D=0,C=0, B=0  ---> display off
 	HAL_Delay(10);
-	lcd_send_cmd (0x01);  // clear display
+	lcdSendComd (0x01);  // clear display
 	HAL_Delay(10);
 	HAL_Delay(10);
-	lcd_send_cmd (0x06); //Entry mode set --> I/D = 1 (increment cursor) & S = 0 (no shift)
+	lcdSendComd (0x06); //Entry mode set --> I/D = 1 (increment cursor) & S = 0 (no shift)
 	HAL_Delay(10);
-	lcd_send_cmd (0x0C); //Display on/off control --> D = 1, C and B = 0. (Cursor and blink, last two bits)
+	lcdSendComd (0x0C); //Display on/off control --> D = 1, C and B = 0. (Cursor and blink, last two bits)
 }
 
-void lcd_send_string (char *str)
+void lcdSendString (char *str)
 {
-	while (*str) lcd_send_data (*str++);
+	while (*str) lcdSendData (*str++);
 }
 
 void updateLCD(char *str)
 {
-	lcd_clear();
+	lcdClear();
 	HAL_Delay(50);
-	lcd_put_cur(0,0);
+	lcdSetCursor(0,0);
 	HAL_Delay(50);
-	lcd_send_string(str);
+	lcdSendString(str);
 }

@@ -23,9 +23,8 @@ void waitTillMagnetometerIsInitialized()
 {
 	while (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)HMC5883L_ADRESS, 10, 100) != HAL_OK)
 	{
-		lcd_clear();
-		lcd_put_cur(0, 0);
-		lcd_send_string ("HMCnotready");
+		lcdClear();
+		lcdSendString ("HMCnotready");
 
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		HAL_Delay(500);

@@ -28,9 +28,9 @@ void initAccelerometer()
 	//HAL_I2C_Mem_Write_IT(&hi2c1,ACC_ADDRESS << 1, LIS3DSH_CTRL_REG4_ADDR, 1, &array[0], 1);
 	accelerationDataReadingIndicator = READING_ACCELERATION;
 	char OK[] = "initACC READ";
-	lcd_clear();
-	lcd_put_cur(0, 0);
-	lcd_send_string(OK);
+	lcdClear();
+	lcdSetCursor(0, 0);
+	lcdSendString(OK);
 	HAL_Delay(1000);
 }
 
@@ -42,9 +42,9 @@ void waitTillAccelerometerIsInitialized(void)
 		  char outWho[16];
 		  HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x0F, 1, &who, 1, 100);
 		  sprintf(outWho, "AC2not %d", who);
-		  lcd_clear();
-		  lcd_put_cur(0, 0);
-		  lcd_send_string(outWho);
+		  lcdClear();
+		  lcdSetCursor(0, 0);
+		  lcdSendString(outWho);
 
 		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		  HAL_Delay(200);

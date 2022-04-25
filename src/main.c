@@ -1,13 +1,3 @@
-///**
-//  ******************************************************************************
-//  * @file    main.c
-//  * @author  Ac6
-//  * @version V1.0
-//  * @date    01-December-2013
-//  * @brief   Default main function.
-//  ******************************************************************************
-//*/
-
 #include <stdio.h>
 
 #include "stm32f4xx.h"
@@ -19,7 +9,7 @@
 
 #include <string.h>
 #include "stm32f4xx.h"
-#include "i2c-lcd.h"
+#include "lcd_display.h"
 #include "magnetometer.h"
 #include "accelerometer.h"
 #include "gsm_transmission.h"
@@ -264,9 +254,9 @@ int main(void)
     initConnectionCommands(&connectionCommands);
     initSendingCommands(&sendingCommands);
     initAccelerometer();
-	lcd_init ();
+	lcdInit ();
 	initHMC5883L();
-	lcd_clear();
+	lcdClear();
 
 
 	waitTillAccelerometerIsInitialized();
@@ -287,15 +277,15 @@ int main(void)
 		     	degree = calculateAzimutWithDegree();
 				char accelerationReadString[16];
 			    char magnitudeReadString[16];
-			    lcd_clear();
-			    lcd_put_cur(0, 0);
+			    lcdClear();
+			    lcdSetCursor(0, 0);
 			    sprintf(magnitudeReadString, "Degree %d", (int)degree);
-			    lcd_send_string (magnitudeReadString);
-			    lcd_put_cur(1, 0);
+			    lcdSendString (magnitudeReadString);
+			    lcdSetCursor(1, 0);
 //			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
 //			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
 			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
-			    lcd_send_string(accelerationReadString);
+			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
 				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d \r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
@@ -312,9 +302,9 @@ int main(void)
 				if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 100) != HAL_OK)
 				{
 					char nok[] = "HAL_NOK AT!";
-				    lcd_clear();
-				    lcd_put_cur(0, 0);
-				    lcd_send_string(nok);
+				    lcdClear();
+				    lcdSetCursor(0, 0);
+				    lcdSendString(nok);
 				    HAL_Delay(2000);
 				    return 1;
 				}
@@ -322,17 +312,17 @@ int main(void)
 				if(HAL_UART_Receive_IT(&huart2, rec, 6) != HAL_OK)
 				{
 					char nok[] = "HAL_NOK ATR!";
-				    lcd_clear();
-				    lcd_put_cur(0, 0);
-				    lcd_send_string(nok);
+				    lcdClear();
+				    lcdSetCursor(0, 0);
+				    lcdSendString(nok);
 				    HAL_Delay(2000);
 				   // return 1;
 				}
 				char st[6];
 				sprintf(st, "Sta:%d", currentAtCommand);
-			    lcd_clear();
-			    lcd_put_cur(0, 0);
-			    lcd_send_string(st);
+			    lcdClear();
+			    lcdSetCursor(0, 0);
+			    lcdSendString(st);
 			    HAL_Delay(2000);
 
 				sendDataToServer(degree, accel);

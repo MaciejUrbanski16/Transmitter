@@ -29,7 +29,7 @@ typedef enum
 
 typedef struct
 {
-	uint8_t AT[4];
+	uint8_t AT[12];
 	uint8_t responseAT[2];
 
 	uint8_t AT_CWJAP[28]; //26?			//AT+CWJAP="Nokia 8.3 5G",""

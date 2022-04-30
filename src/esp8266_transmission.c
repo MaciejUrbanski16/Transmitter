@@ -7,10 +7,13 @@ extern UART_HandleTypeDef huart2;
 void initSendingCommands(SendingCommands *sendingCommands)
 {
 	//sprintf("AT\r\n", sendingCommands->AT);
+//	sendingCommands->AT[0] = '\r';
+//	sendingCommands->AT[1] = '\n';
 	sendingCommands->AT[0] = 'A';
 	sendingCommands->AT[1] = 'T';
 	sendingCommands->AT[2] = '\r';
 	sendingCommands->AT[3] = '\n';
+//	sendingCommands->AT[4] = '\0';
 
 	sendingCommands->responseAT[0] = '\r';
 	sendingCommands->responseAT[1] = '\n';

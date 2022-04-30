@@ -15,124 +15,173 @@
 #include "gsm_transmission.h"
 #include "esp8266_transmission.h"
 
-UART_HandleTypeDef huart2, huart1;
+UART_HandleTypeDef huart2, huart1, huart6;
+
 
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
 ConnectionCommands connectionCommands;
 
 SendingCommands sendingCommands;
-CurrentATcommand currentAtCommand = AT;
+volatile CurrentATcommand currentAtCommand = AT;
+volatile int received=2;
 uint8_t data[60] ="hello\r\n";
+const uint8_t size = 10;
+
+volatile uint8_t rec[10];
 
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
+void MX_USART6_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 
+void USART2_IRQHandler(void)
+{
+
+
+	/* USER CODE BEGIN USART1_IRQn 0 */
+
+	/* USER CODE END USART1_IRQn 0 */
+	HAL_UART_IRQHandler(&huart2);
+	/* USER CODE BEGIN USART1_IRQn 1 */
+
+//	uint32_t tmp_flag = 0;
+//	uint32_t temp;
+//	tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
+//	received = 5;
+//	if ((tmp_flag != RESET))
+//	{
+//
+//
+//		__HAL_UART_CLEAR_IDLEFLAG(&huart2);
+////		temp = huart1.Instance->ISR;
+////		temp = huart1.Instance->RDR;
+////		HAL_UART_DMAStop(&huart1);
+////		temp = hdma_usart1_rx.Instance->NDTR;
+////		rx_len = BUFFER_SIZE - temp;
+////		recv_end_flag = 1;
+//	}
+	/* USER CODE END USART1_IRQn 1 */
+}
+void USART6_IRQHandler(void)
+{
+	HAL_UART_IRQHandler(&huart6);
+}
+
+//void USART1_IRQHandler(void)
+//{
+//	HAL_UART_IRQHandler(&huart1);  // This is the CubeMX generated HAL handler
+//}
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == USART2)
+	received=8;
+
+	if(huart->Instance == USART1)
 	{
-		switch(currentAtCommand)
-		{
-		case AT:
-			currentAtCommand = RESPONSE_AT_RECEIVED;
-			break;
-		case CWJAP:
-			currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-			break;
-		case CIPMUX:
-			currentAtCommand = RESPONSE_CIPMUX_RECEIVED;
-			break;
-		case CIPSTART:
-			currentAtCommand = RESPONSE_CIPSTART_RECEIVED;
-			break;
-		case CIPSEND:
-			currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
-			break;
-//		case SEND_DATA:
-//			sendDataToServer();
-//			currentAtCommand = CIPCLOSE;
-		case CIPCLOSE:
-			currentAtCommand = RESPONSE_CIPCLOSE_RECEIVED;
-			break;
-		}
+		currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+
 	}
+	else if(huart->Instance == USART2)
+	{
+		HAL_UART_Receive_IT(&huart2, &rec, 1);
+	}
+	else if(huart->Instance == USART6)
+	{
+		int i = 0;
+		for( i=0; i<size; i++ )
+		{
+			if(rec[i] == 'O' || rec[i] == 'K')
+			{
+				currentAtCommand++;
+				break;
+			}
+		}
+		HAL_UART_Receive_IT(&huart6, &rec, size);
+	}
+
+//	USART1_IRQHandler();
+
+//	 __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);  // enable receive intterupts
+//	 HAL_UART_IRQHandler(&huart2);
+//	 HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
+
 
 void sendDataToServer(float azimuth, XYZaxisAccelerationMS2 accel)
 {
-	char rcvd_data[10];
-	HAL_UART_Receive_IT(&huart2, &rcvd_data, 10);
-	switch (currentAtCommand)
-	{
-	case RESPONSE_AT_RECEIVED:
-		currentAtCommand = CWJAP;
-		break;
-	case RESPONSE_CWJAP_RECEIVED:
-		currentAtCommand = CIPMUX;
-		break;
-	case RESPONSE_CIPMUX_RECEIVED:
-		currentAtCommand = CIPSTART;
-		break;
-	case RESPONSE_CIPSTART_RECEIVED:
-		currentAtCommand = CIPSEND;
-		break;
-	case RESPONSE_CIPSEND_RECEIVED:
-		//sending...
-		currentAtCommand = CIPSTART;
-		break;
-	}
+//	char rcvd_data[10];
+//	HAL_UART_Receive_IT(&huart2, &rcvd_data, 10);
+//	switch (currentAtCommand)
+//	{
+//	case RESPONSE_AT_RECEIVED:
+//		currentAtCommand = CWJAP;
+//		break;
+//	case RESPONSE_CWJAP_RECEIVED:
+//		currentAtCommand = CIPMUX;
+//		break;
+//	case RESPONSE_CIPMUX_RECEIVED:
+//		currentAtCommand = CIPSTART;
+//		break;
+//	case RESPONSE_CIPSTART_RECEIVED:
+//		currentAtCommand = CIPSEND;
+//		break;
+//	case RESPONSE_CIPSEND_RECEIVED:
+//		//sending...
+//		currentAtCommand = CIPSTART;
+//		break;
+//	}
 
 
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart->Instance == USART1)
-	{
-//		char stateToPrint[30];
-//		sprintf(stateToPrint, "TxCallba state: %d\r\n", currentAtCommand);
-//		if(HAL_UART_Transmit(&huart2, stateToPrint, sizeof(stateToPrint), 80) != HAL_OK)
-//		{
-//			char nok[20];
-//			sprintf(nok, "HAL_NOK ST: %d\r\n", currentAtCommand);
-//		    lcd_clear();
-//		    lcd_put_cur(0, 0);
-//		    lcd_send_string(nok);
-//		    HAL_Delay(5000);
-//		    //return 1;
-//		}
-
-		switch(currentAtCommand)
-		{
-		case RESPONSE_AT_RECEIVED:
-			currentAtCommand = CWJAP;
-			break;
-		case RESPONSE_CWJAP_RECEIVED:
-			currentAtCommand = CIPMUX;
-			break;
-		case RESPONSE_CIPMUX_RECEIVED:
-			currentAtCommand = CIPSTART;
-			break;
-		case RESPONSE_CIPSTART_RECEIVED:
-			currentAtCommand = CIPSEND;
-			break;
-		case RESPONSE_CIPSEND_RECEIVED:
-			//currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
-			break;
-//		case SEND_DATA:
-//			sendDataToServer();
-//			currentAtCommand = CIPCLOSE;
-		case RESPONSE_CIPCLOSE_RECEIVED:
-			currentAtCommand = AT;
-			break;
-		}
-	}
-}
-
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+//	if(huart->Instance == USART1)
+//	{
+////		char stateToPrint[30];
+////		sprintf(stateToPrint, "TxCallba state: %d\r\n", currentAtCommand);
+////		if(HAL_UART_Transmit(&huart2, stateToPrint, sizeof(stateToPrint), 80) != HAL_OK)
+////		{
+////			char nok[20];
+////			sprintf(nok, "HAL_NOK ST: %d\r\n", currentAtCommand);
+////		    lcd_clear();
+////		    lcd_put_cur(0, 0);
+////		    lcd_send_string(nok);
+////		    HAL_Delay(5000);
+////		    //return 1;
+////		}
+//
+////		switch(currentAtCommand)
+////		{
+////		case RESPONSE_AT_RECEIVED:
+////			currentAtCommand = CWJAP;
+////			break;
+////		case RESPONSE_CWJAP_RECEIVED:
+////			currentAtCommand = CIPMUX;
+////			break;
+////		case RESPONSE_CIPMUX_RECEIVED:
+////			currentAtCommand = CIPSTART;
+////			break;
+////		case RESPONSE_CIPSTART_RECEIVED:
+////			currentAtCommand = CIPSEND;
+////			break;
+////		case RESPONSE_CIPSEND_RECEIVED:
+////			//currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
+////			break;
+//////		case SEND_DATA:
+//////			sendDataToServer();
+//////			currentAtCommand = CIPCLOSE;
+////		case RESPONSE_CIPCLOSE_RECEIVED:
+////			currentAtCommand = AT;
+////			break;
+////		}
+//	}
+//}
 
 void TIM2_IRQHandler(void)
 {
@@ -192,32 +241,29 @@ int main(void)
 	HAL_Init();
 	GPIO_InitTypeDef GPIO_InitStruct;
 
+
 	 __GPIOA_CLK_ENABLE();
 	 __GPIOB_CLK_ENABLE();
 	 __GPIOC_CLK_ENABLE();
 	 __USART2_CLK_ENABLE();
+	 __USART6_CLK_ENABLE();
 	 __USART1_CLK_ENABLE();
+	 __HAL_RCC_USART1_CLK_ENABLE();
+	 __HAL_RCC_USART2_CLK_ENABLE();
+	 __HAL_RCC_USART6_CLK_ENABLE();
+
 
 	 __HAL_RCC_GPIOD_CLK_ENABLE();
 	 __HAL_RCC_GPIOA_CLK_ENABLE();
 	 __HAL_RCC_GPIOB_CLK_ENABLE();
+	 __HAL_RCC_GPIOC_CLK_ENABLE();
+
 
     GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7/*|GPIO_PIN_8*/;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_2;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+//    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_9;
@@ -228,8 +274,28 @@ int main(void)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_10;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+    GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF8_USART6;
+    GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 
 
 	GPIO_InitTypeDef gpio_I2C1_SDA_SCL;
@@ -250,6 +316,7 @@ int main(void)
 	MX_TIM2_Init();
     MX_USART2_UART_Init();
     MX_USART1_UART_Init();
+    MX_USART6_UART_Init();
 
     initConnectionCommands(&connectionCommands);
     initSendingCommands(&sendingCommands);
@@ -263,6 +330,11 @@ int main(void)
 	waitTillMagnetometerIsInitialized();
 
 	int counterOfTx=0;
+//	USART1_IRQHandler();
+
+	HAL_UART_Receive_IT(&huart6, &rec, size);
+	HAL_UART_Receive_IT(&huart2, &rec, 1);
+//	HAL_UART_Receive_DMA(&huart1, rec, 1);
 
 	while (1)
 	{
@@ -288,42 +360,60 @@ int main(void)
 			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
-				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d \r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
-						accel.yAcc.integerPart, accel.yAcc.floatingPart, accel.zAcc.integerPart, accel.zAcc.floatingPart);
-//				if(HAL_UART_Transmit(&huart2, measurements, sizeof(measurements), 120) != HAL_OK)
+				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d rec:%d atsize:%d\r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
+						accel.yAcc.integerPart, accel.yAcc.floatingPart, accel.zAcc.integerPart, accel.zAcc.floatingPart, received, strlen(sendingCommands.AT));
+				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
+				{
+					char nok[] = "HAL_NOK meas!";
+					lcdClear();
+					lcdSetCursor(0, 0);
+					lcdSendString(nok);
+				    HAL_Delay(5000);
+				    //return 1;
+				}
+
+
+				//currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+
+				if(HAL_UART_Transmit(&huart1, sendingCommands.AT, strlen(sendingCommands.AT), 100) == HAL_OK)
+				{
+//					if(HAL_UART_Receive(&huart2, rec, 2, 1000) == HAL_OK)
+//					{
+//						received++;
+//					}
+					//HAL_UART_Transmit(&huart1, "\r\n", strlen(sendingCommands.AT), 100);
+//					if(HAL_UART_Receive(&huart6, rec, 1, 100) == HAL_OK)
+//					{
+//						received =9;
+//					}
+					HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+//					char nok[] = "HAL_NOK AT!";
+//				    lcdClear();
+//				    lcdSetCursor(0, 0);
+//				    lcdSendString(nok);
+//				    HAL_Delay(2000);
+//				    return 1;
+				}
+				HAL_UART_Transmit(&huart2, sendingCommands.AT, strlen(sendingCommands.AT), 100);
+//				HAL_UART_Transmit(&huart1, sendingCommands.AT, sizeof(sendingCommands.AT), 100);
+
+
+
+//				if(HAL_UART_Receive_IT(&huart1, rec, 6) != HAL_OK)
 //				{
-//					char nok[] = "HAL_NOK meas!";
-//				    lcd_clear();
-//				    lcd_put_cur(0, 0);
-//				    lcd_send_string(nok);
-//				    HAL_Delay(5000);
-//				    //return 1;
+//					char nok[] = "HAL_NOK ATR!";
+//				    lcdClear();
+//				    lcdSetCursor(0, 0);
+//				    lcdSendString(nok);
+//				    HAL_Delay(2000);
+//				   // return 1;
 //				}
-				if(HAL_UART_Transmit(&huart2, sendingCommands.AT, sizeof(sendingCommands.AT), 100) != HAL_OK)
-				{
-					char nok[] = "HAL_NOK AT!";
-				    lcdClear();
-				    lcdSetCursor(0, 0);
-				    lcdSendString(nok);
-				    HAL_Delay(2000);
-				    return 1;
-				}
-				char rec[6];
-				if(HAL_UART_Receive_IT(&huart2, rec, 6) != HAL_OK)
-				{
-					char nok[] = "HAL_NOK ATR!";
-				    lcdClear();
-				    lcdSetCursor(0, 0);
-				    lcdSendString(nok);
-				    HAL_Delay(2000);
-				   // return 1;
-				}
 				char st[6];
 				sprintf(st, "Sta:%d", currentAtCommand);
 			    lcdClear();
 			    lcdSetCursor(0, 0);
 			    lcdSendString(st);
-			    HAL_Delay(2000);
+			    HAL_Delay(800);
 
 				sendDataToServer(degree, accel);
 
@@ -425,7 +515,7 @@ static void MX_TIM4_Init(void)
 void MX_USART2_UART_Init(void)
 {
     huart2.Instance = USART2;
-    huart2.Init.BaudRate = 115200;
+    huart2.Init.BaudRate = 9600;
     huart2.Init.WordLength = UART_WORDLENGTH_8B;
     huart2.Init.StopBits = UART_STOPBITS_1;
     huart2.Init.Parity = UART_PARITY_NONE;
@@ -433,17 +523,71 @@ void MX_USART2_UART_Init(void)
     huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
     huart2.Init.OverSampling = UART_OVERSAMPLING_16;
     HAL_UART_Init(&huart2);
+
+//	 __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);  // enable receive intterupts
+//	 HAL_UART_IRQHandler(&huart2);
+
+		__HAL_UART_ENABLE_IT(&huart2,  UART_IT_RXNE);
+//		HAL_UART_Receive_DMA(&huart2, rec, 1);
+
+//	    HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+	    HAL_NVIC_EnableIRQ(USART2_IRQn);
+//	 HAL_NVIC_EnableIRQ(USART2_IRQn);
+
 }
 
 void MX_USART1_UART_Init(void)
 {
-    huart2.Instance = USART1;
-    huart2.Init.BaudRate = 115200;
-    huart2.Init.WordLength = UART_WORDLENGTH_8B;
-    huart2.Init.StopBits = UART_STOPBITS_1;
-    huart2.Init.Parity = UART_PARITY_NONE;
-    huart2.Init.Mode = UART_MODE_TX_RX;
-    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-    HAL_UART_Init(&huart1);
+    huart1.Instance = USART1;
+    huart1.Init.BaudRate = 115200;
+    huart1.Init.WordLength = UART_WORDLENGTH_8B;
+    huart1.Init.StopBits = UART_STOPBITS_1;
+    huart1.Init.Parity = UART_PARITY_NONE;
+    huart1.Init.Mode = UART_MODE_TX_RX;
+    huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+
+    if (HAL_UART_Init(&huart1) != HAL_OK)
+    {
+      while(1);
+    }
+
+//	 __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // enable receive intterupts
+//	 NVIC_EnableIRQ(USART1_IRQn);
+	    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+
+
+	  //  HAL_NVIC_EnableIRQ(USART1_IRQn);
+	// HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
+
+void MX_USART6_UART_Init(void)
+{
+    huart6.Instance = USART6;
+    huart6.Init.BaudRate = 115200;
+    huart6.Init.WordLength = UART_WORDLENGTH_8B;
+    huart6.Init.StopBits = UART_STOPBITS_1;
+    huart6.Init.Parity = UART_PARITY_NONE;
+    huart6.Init.Mode = UART_MODE_TX_RX ;
+    huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+
+    if (HAL_UART_Init(&huart6) != HAL_OK)
+    {
+      while(1);
+    }
+
+//	 __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // enable receive intterupts
+//	 NVIC_EnableIRQ(USART1_IRQn);
+	   // HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+	__HAL_UART_ENABLE_IT(&huart6,  UART_IT_RXNE);
+	HAL_NVIC_EnableIRQ(USART6_IRQn);
+
+
+//	    HAL_UART_IRQHandler(&huart6);
+
+
+//	    HAL_NVIC_EnableIRQ(USART6_IRQn);
+//	 HAL_NVIC_EnableIRQ(USART6_IRQn);
+}
+

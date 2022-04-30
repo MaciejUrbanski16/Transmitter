@@ -14,23 +14,27 @@ typedef enum
 {
 	AT = 0,
 	RESPONSE_AT_RECEIVED = 1,
-	CWJAP = 2,
-	RESPONSE_CWJAP_RECEIVED = 3,
-	CIPMUX = 4,
-	RESPONSE_CIPMUX_RECEIVED = 5,
-	CIPSTART = 6,
-	RESPONSE_CIPSTART_RECEIVED = 7,
-	CIPSEND = 8,
-	RESPONSE_CIPSEND_RECEIVED = 9,
-	SEND_DATA = 10,
-	CIPCLOSE = 11,
-	RESPONSE_CIPCLOSE_RECEIVED = 12
+	CWMODE = 2,
+	RESPONSE_AT_CWMODE_RECEIVED = 3,
+	CWJAP = 4,
+	RESPONSE_CWJAP_RECEIVED = 5,
+	CIPMUX = 6,
+	RESPONSE_CIPMUX_RECEIVED = 7,
+	CIPSTART = 8,
+	RESPONSE_CIPSTART_RECEIVED = 9,
+	CIPSEND = 10,
+	RESPONSE_CIPSEND_RECEIVED = 11,
+	SEND_DATA = 12,
+	CIPCLOSE = 13,
+	RESPONSE_CIPCLOSE_RECEIVED = 14
 }CurrentATcommand;
 
 typedef struct
 {
 	uint8_t AT[12];
 	uint8_t responseAT[2];
+
+	uint8_t AT_CWMODE[20]; 				//AT+CWMODE=3
 
 	uint8_t AT_CWJAP[28]; //26?			//AT+CWJAP="Nokia 8.3 5G",""
 	uint8_t responseAT_CWJAP[14];		//WIFI CONNECTED
@@ -53,6 +57,13 @@ typedef struct
 void debug(int state);
 
 void initSendingCommands(SendingCommands *sendingCommands);
+
+void sendAT();
+void sendAT_CWMODE();
+void sendAT_CWJAP();
+void sendAT_CIPSEND();
+void sendMessage();
+void sendAT_CIPCLOSE();
 
 
 uint8_t receiveATresponse(SendingCommands *sendingCommands);

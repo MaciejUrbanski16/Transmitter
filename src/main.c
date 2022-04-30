@@ -24,6 +24,7 @@ ConnectionCommands connectionCommands;
 
 SendingCommands sendingCommands;
 volatile CurrentATcommand currentAtCommand = AT;
+uint8_t sendWifiConnect = 0;
 volatile int received=2;
 uint8_t data[60] ="hello\r\n";
 const uint8_t size = 10;
@@ -92,97 +93,51 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	else if(huart->Instance == USART6)
 	{
 		int i = 0;
-		for( i=0; i<size; i++ )
+		switch(currentAtCommand)
 		{
-			if(rec[i] == 'O' || rec[i] == 'K')
+		case AT:
+			for( i=0; i<size; i++ )
 			{
-				currentAtCommand++;
-				break;
+				if(rec[i] == 'O' || rec[i] == 'K')
+				{
+					currentAtCommand = RESPONSE_AT_RECEIVED;
+					break;
+				}
 			}
+			HAL_UART_Receive_IT(&huart6, &rec, size);
+			break;
+		case CWMODE:
+			for( i=0; i<size; i++ )
+			{
+				if(rec[i] == 'O' || rec[i] == 'K')
+				{
+					currentAtCommand = RESPONSE_AT_CWMODE_RECEIVED;
+					break;
+				}
+			}
+			HAL_UART_Receive_IT(&huart6, &rec, size);
+			break;
+		case CWJAP:
+			for( i=0; i<size; i++ )
+			{
+				if(rec[i] == 'W' || rec[i] == 'I')
+				{
+					currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+					break;
+				}
+			}
+			HAL_UART_Receive_IT(&huart6, &rec, size);
+			break;
 		}
-		HAL_UART_Receive_IT(&huart6, &rec, size);
+
 	}
 
-//	USART1_IRQHandler();
-
-//	 __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);  // enable receive intterupts
-//	 HAL_UART_IRQHandler(&huart2);
-//	 HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 
 void sendDataToServer(float azimuth, XYZaxisAccelerationMS2 accel)
 {
-//	char rcvd_data[10];
-//	HAL_UART_Receive_IT(&huart2, &rcvd_data, 10);
-//	switch (currentAtCommand)
-//	{
-//	case RESPONSE_AT_RECEIVED:
-//		currentAtCommand = CWJAP;
-//		break;
-//	case RESPONSE_CWJAP_RECEIVED:
-//		currentAtCommand = CIPMUX;
-//		break;
-//	case RESPONSE_CIPMUX_RECEIVED:
-//		currentAtCommand = CIPSTART;
-//		break;
-//	case RESPONSE_CIPSTART_RECEIVED:
-//		currentAtCommand = CIPSEND;
-//		break;
-//	case RESPONSE_CIPSEND_RECEIVED:
-//		//sending...
-//		currentAtCommand = CIPSTART;
-//		break;
-//	}
-
-
 }
-
-//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//	currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-//	if(huart->Instance == USART1)
-//	{
-////		char stateToPrint[30];
-////		sprintf(stateToPrint, "TxCallba state: %d\r\n", currentAtCommand);
-////		if(HAL_UART_Transmit(&huart2, stateToPrint, sizeof(stateToPrint), 80) != HAL_OK)
-////		{
-////			char nok[20];
-////			sprintf(nok, "HAL_NOK ST: %d\r\n", currentAtCommand);
-////		    lcd_clear();
-////		    lcd_put_cur(0, 0);
-////		    lcd_send_string(nok);
-////		    HAL_Delay(5000);
-////		    //return 1;
-////		}
-//
-////		switch(currentAtCommand)
-////		{
-////		case RESPONSE_AT_RECEIVED:
-////			currentAtCommand = CWJAP;
-////			break;
-////		case RESPONSE_CWJAP_RECEIVED:
-////			currentAtCommand = CIPMUX;
-////			break;
-////		case RESPONSE_CIPMUX_RECEIVED:
-////			currentAtCommand = CIPSTART;
-////			break;
-////		case RESPONSE_CIPSTART_RECEIVED:
-////			currentAtCommand = CIPSEND;
-////			break;
-////		case RESPONSE_CIPSEND_RECEIVED:
-////			//currentAtCommand = RESPONSE_CIPSEND_RECEIVED;
-////			break;
-//////		case SEND_DATA:
-//////			sendDataToServer();
-//////			currentAtCommand = CIPCLOSE;
-////		case RESPONSE_CIPCLOSE_RECEIVED:
-////			currentAtCommand = AT;
-////			break;
-////		}
-//	}
-//}
-
 void TIM2_IRQHandler(void)
 {
   HAL_TIM_IRQHandler(&timer2);
@@ -371,31 +326,32 @@ int main(void)
 				    HAL_Delay(5000);
 				    //return 1;
 				}
+				//sendAT_CWMODE();
 
 
-				//currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-
-				if(HAL_UART_Transmit(&huart1, sendingCommands.AT, strlen(sendingCommands.AT), 100) == HAL_OK)
-				{
-//					if(HAL_UART_Receive(&huart2, rec, 2, 1000) == HAL_OK)
-//					{
-//						received++;
-//					}
-					//HAL_UART_Transmit(&huart1, "\r\n", strlen(sendingCommands.AT), 100);
-//					if(HAL_UART_Receive(&huart6, rec, 1, 100) == HAL_OK)
-//					{
-//						received =9;
-//					}
-					HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
-//					char nok[] = "HAL_NOK AT!";
-//				    lcdClear();
-//				    lcdSetCursor(0, 0);
-//				    lcdSendString(nok);
-//				    HAL_Delay(2000);
-//				    return 1;
-				}
-				HAL_UART_Transmit(&huart2, sendingCommands.AT, strlen(sendingCommands.AT), 100);
-//				HAL_UART_Transmit(&huart1, sendingCommands.AT, sizeof(sendingCommands.AT), 100);
+//				//currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+//
+//				if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100) == HAL_OK)
+//				{
+////					if(HAL_UART_Receive(&huart2, rec, 2, 1000) == HAL_OK)
+////					{
+////						received++;
+////					}
+//					//HAL_UART_Transmit(&huart1, "\r\n", strlen(sendingCommands.AT), 100);
+////					if(HAL_UART_Receive(&huart6, rec, 1, 100) == HAL_OK)
+////					{
+////						received =9;
+////					}
+//					HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+////					char nok[] = "HAL_NOK AT!";
+////				    lcdClear();
+////				    lcdSetCursor(0, 0);
+////				    lcdSendString(nok);
+////				    HAL_Delay(2000);
+////				    return 1;
+//				}
+////				HAL_UART_Transmit(&huart2, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100);
+////				HAL_UART_Transmit(&huart1, sendingCommands.AT, sizeof(sendingCommands.AT), 100);
 
 
 
@@ -408,6 +364,25 @@ int main(void)
 //				    HAL_Delay(2000);
 //				   // return 1;
 //				}
+				//				if(currentAtCommand == RESPONSE_AT_RECEIVED)
+				//				{
+								//	sendAT_CWMODE();
+				//				}
+				if(sendWifiConnect == 0)
+				{
+					sendAT_CIPSTART();
+					HAL_Delay(50);
+					sendAT_CIPSEND();
+					HAL_Delay(50);
+					sendMessage();
+					HAL_Delay(50);
+					sendAT_CIPCLOSE();
+					sendWifiConnect = 1;
+				}
+				else
+				{
+					sendAT();
+				}
 				char st[6];
 				sprintf(st, "Sta:%d", currentAtCommand);
 			    lcdClear();

@@ -2,7 +2,9 @@
 #include <stdio.h>
 
 extern CurrentATcommand currentAtCommand;
-extern UART_HandleTypeDef huart2;
+extern SendingCommands sendingCommands;
+extern UART_HandleTypeDef huart2, huart1;
+extern volatile uint8_t rec[10];
 
 void initSendingCommands(SendingCommands *sendingCommands)
 {
@@ -22,7 +24,21 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->responseAT[4] = '\r';
 	sendingCommands->responseAT[5] = '\n';
 
-	//AT+CWJAP="Nokia 8.3 5G",""
+	sendingCommands->AT_CWMODE[0] = 'A';
+	sendingCommands->AT_CWMODE[1] = 'T';
+	sendingCommands->AT_CWMODE[2] = '+';
+	sendingCommands->AT_CWMODE[3] = 'C';
+	sendingCommands->AT_CWMODE[4] = 'W';
+	sendingCommands->AT_CWMODE[5] = 'M';
+	sendingCommands->AT_CWMODE[6] = 'O';
+	sendingCommands->AT_CWMODE[7] = 'D';
+	sendingCommands->AT_CWMODE[8] = 'E';
+	sendingCommands->AT_CWMODE[9] = '=';
+	sendingCommands->AT_CWMODE[10] = '3';
+	sendingCommands->AT_CWMODE[11] = '\r';
+	sendingCommands->AT_CWMODE[12] = '\n';
+
+	//AT+CWJAP="InfaNET-K-1234","qwertyuiop"
 	sendingCommands->AT_CWJAP[0] = 'A';
 	sendingCommands->AT_CWJAP[1] = 'T';
 	sendingCommands->AT_CWJAP[2] = '+';
@@ -33,24 +49,36 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->AT_CWJAP[7] = 'P';
 	sendingCommands->AT_CWJAP[8] = '=';
 	sendingCommands->AT_CWJAP[9] = '"';
-	sendingCommands->AT_CWJAP[10] = 'N';
-	sendingCommands->AT_CWJAP[11] = 'o';
-	sendingCommands->AT_CWJAP[12] = 'k';
-	sendingCommands->AT_CWJAP[13] = 'i';
-	sendingCommands->AT_CWJAP[14] = 'a';
-	sendingCommands->AT_CWJAP[15] = ' ';
-	sendingCommands->AT_CWJAP[16] = '8';
-	sendingCommands->AT_CWJAP[17] = '.';
-	sendingCommands->AT_CWJAP[18] = '3';
-	sendingCommands->AT_CWJAP[19] = ' ';
-	sendingCommands->AT_CWJAP[20] = '5';
-	sendingCommands->AT_CWJAP[21] = 'G';
-	sendingCommands->AT_CWJAP[22] = '"';
-	sendingCommands->AT_CWJAP[23] = ',';
+	sendingCommands->AT_CWJAP[10] = 'I';
+	sendingCommands->AT_CWJAP[11] = 'n';
+	sendingCommands->AT_CWJAP[12] = 'f';
+	sendingCommands->AT_CWJAP[13] = 'a';
+	sendingCommands->AT_CWJAP[14] = 'N';
+	sendingCommands->AT_CWJAP[15] = 'E';
+	sendingCommands->AT_CWJAP[16] = 'T';
+	sendingCommands->AT_CWJAP[17] = '-';
+	sendingCommands->AT_CWJAP[18] = 'K';
+	sendingCommands->AT_CWJAP[19] = '-';
+	sendingCommands->AT_CWJAP[20] = '1';
+	sendingCommands->AT_CWJAP[21] = '2';
+	sendingCommands->AT_CWJAP[22] = '3';
+	sendingCommands->AT_CWJAP[23] = '4';
 	sendingCommands->AT_CWJAP[24] = '"';
-	sendingCommands->AT_CWJAP[25] = '"';
-	sendingCommands->AT_CWJAP[26] = '\r';
-	sendingCommands->AT_CWJAP[27] = '\n';
+	sendingCommands->AT_CWJAP[25] = ',';
+	sendingCommands->AT_CWJAP[26] = '"';
+	sendingCommands->AT_CWJAP[27] = 'q';
+	sendingCommands->AT_CWJAP[28] = 'w';
+	sendingCommands->AT_CWJAP[29] = 'e';
+	sendingCommands->AT_CWJAP[30] = 'r';
+	sendingCommands->AT_CWJAP[31] = 't';
+	sendingCommands->AT_CWJAP[32] = 'y';
+	sendingCommands->AT_CWJAP[33] = 'u';
+	sendingCommands->AT_CWJAP[34] = 'i';
+	sendingCommands->AT_CWJAP[35] = 'o';
+	sendingCommands->AT_CWJAP[36] = 'p';
+	sendingCommands->AT_CWJAP[37] = '"';
+	sendingCommands->AT_CWJAP[38] = '\r';
+	sendingCommands->AT_CWJAP[39] = '\n';
 
 	//AT+CIPMUX=0
 	sendingCommands->AT_CIPMUX[0] = 'A';
@@ -67,7 +95,7 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->AT_CIPMUX[11] = '\r';
 	sendingCommands->AT_CIPMUX[12] = '\n';
 
-	//AT+CIPSTART="TCP","api.thingspeak.com",80
+	//AT+CIPSTART="TCP","10.0.0.100",8000
 	sendingCommands->AT_CIPSTART[0] = 'A';
 	sendingCommands->AT_CIPSTART[1] = 'T';
 	sendingCommands->AT_CIPSTART[2] = '+';
@@ -87,30 +115,24 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->AT_CIPSTART[16] = '"';
 	sendingCommands->AT_CIPSTART[17] = ',';
 	sendingCommands->AT_CIPSTART[18] = '"';
-	sendingCommands->AT_CIPSTART[19] = 'a';
-	sendingCommands->AT_CIPSTART[20] = 'p';
-	sendingCommands->AT_CIPSTART[21] = 'i';
-	sendingCommands->AT_CIPSTART[22] = '.';
-	sendingCommands->AT_CIPSTART[23] = 't';
-	sendingCommands->AT_CIPSTART[24] = 'h';
-	sendingCommands->AT_CIPSTART[25] = 'i';
-	sendingCommands->AT_CIPSTART[26] = 'n';
-	sendingCommands->AT_CIPSTART[27] = 'g';
-	sendingCommands->AT_CIPSTART[28] = 's';
-	sendingCommands->AT_CIPSTART[29] = 'p';
-	sendingCommands->AT_CIPSTART[30] = 'e';
-	sendingCommands->AT_CIPSTART[31] = 'a';
-	sendingCommands->AT_CIPSTART[32] = 'k';
-	sendingCommands->AT_CIPSTART[33] = '.';
-	sendingCommands->AT_CIPSTART[34] = 'c';
-	sendingCommands->AT_CIPSTART[35] = 'o';
-	sendingCommands->AT_CIPSTART[36] = 'm';
-	sendingCommands->AT_CIPSTART[37] = '"';
-	sendingCommands->AT_CIPSTART[38] = ',';
-	sendingCommands->AT_CIPSTART[39] = '8';
-	sendingCommands->AT_CIPSTART[40] = '0';
-	sendingCommands->AT_CIPSTART[41] = '\r';
-	sendingCommands->AT_CIPSTART[42] = '\n';
+	sendingCommands->AT_CIPSTART[19] = '1';
+	sendingCommands->AT_CIPSTART[20] = '0';
+	sendingCommands->AT_CIPSTART[21] = '.';
+	sendingCommands->AT_CIPSTART[22] = '0';
+	sendingCommands->AT_CIPSTART[23] = '.';
+	sendingCommands->AT_CIPSTART[24] = '0';
+	sendingCommands->AT_CIPSTART[25] = '.';
+	sendingCommands->AT_CIPSTART[26] = '1';
+	sendingCommands->AT_CIPSTART[27] = '0';
+	sendingCommands->AT_CIPSTART[28] = '0';
+	sendingCommands->AT_CIPSTART[29] = '"';
+	sendingCommands->AT_CIPSTART[30] = ',';
+	sendingCommands->AT_CIPSTART[31] = '8';
+	sendingCommands->AT_CIPSTART[32] = '0';
+	sendingCommands->AT_CIPSTART[33] = '0';
+	sendingCommands->AT_CIPSTART[34] = '0';
+	sendingCommands->AT_CIPSTART[35] = '\r';
+	sendingCommands->AT_CIPSTART[36] = '\n';
 
 	//AT+CIPSEND=51
 	sendingCommands->AT_CIPSEND[0] = 'A';
@@ -124,8 +146,8 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->AT_CIPSEND[8] = 'N';
 	sendingCommands->AT_CIPSEND[9] = 'D';
 	sendingCommands->AT_CIPSEND[10] = '=';
-	sendingCommands->AT_CIPSEND[11] = '5';
-	sendingCommands->AT_CIPSEND[12] = '1';
+	sendingCommands->AT_CIPSEND[11] = '1';
+	sendingCommands->AT_CIPSEND[12] = '0';
 	sendingCommands->AT_CIPSEND[13] = '\r';
 	sendingCommands->AT_CIPSEND[14] = '\n';
 
@@ -162,6 +184,99 @@ void debug(int state)
 	}
 }
 
+void sendAT()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT, strlen(sendingCommands.AT), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT, strlen(sendingCommands.AT), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = AT;
+		return;
+	}
+	uint8_t errorLog[] = "AT was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendAT_CWMODE()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CWMODE;
+		return;
+	}
+	uint8_t errorLog[] = "AT+CWMODE was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendAT_CWJAP()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CWJAP, strlen(sendingCommands.AT_CWJAP), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT_CWJAP, strlen(sendingCommands.AT_CWJAP), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CWJAP;
+		return;
+	}
+	uint8_t errorLog[] = "AT+CWJAP was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendAT_CIPSTART()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CIPSTART, strlen(sendingCommands.AT_CIPSTART), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSTART, strlen(sendingCommands.AT_CIPSTART), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CIPSTART;
+		return;
+	}
+	uint8_t errorLog[] = "AT_CIPSTART was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendAT_CIPSEND()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CIPSEND;
+		return;
+	}
+	uint8_t errorLog[] = "AT_CIPSEND was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendAT_CIPCLOSE()
+{
+	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CIPCLOSE, strlen(sendingCommands.AT_CIPCLOSE), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPCLOSE, strlen(sendingCommands.AT_CIPCLOSE), 100);
+		HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CIPCLOSE;
+		return;
+	}
+	uint8_t errorLog[] = "AT_CIPCLOSE was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+void sendMessage()
+{
+	uint8_t msg[] = "12 2 4 2 2 \r\n";
+	if(HAL_UART_Transmit(&huart1, msg, strlen(msg), 100) == HAL_OK)
+	{
+		HAL_UART_Transmit(&huart2, msg, strlen(msg), 100);
+	//	HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		currentAtCommand = CIPCLOSE;
+		return;
+	}
+	uint8_t errorLog[] = "msg was not sent\r\n";
+	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
+}
+
+////////////////////////
 uint8_t receiveATresponse(SendingCommands *sendingCommands)
 {
 

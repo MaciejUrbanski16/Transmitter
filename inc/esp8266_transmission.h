@@ -45,7 +45,7 @@ typedef struct
 	uint8_t AT_CIPSTART[43];//39?		//AT+CIPSTART="TCP","api.thingspeak.com",80
 	uint8_t responseAT_CIPSTART[7];		//CONNECT
 
-	uint8_t AT_CIPSEND[15];				//AT+CIPSEND=51
+	uint8_t AT_CIPSEND[20];				//AT+CIPSEND=51
 	uint8_t responseAT_CIPSEND[2];		//OK
 
 	uint8_t updateFieldOnServer[100];	//GET /update?api_key=XY42MIVU2SXRRZVL&field1=215
@@ -61,8 +61,8 @@ void initSendingCommands(SendingCommands *sendingCommands);
 void sendAT();
 void sendAT_CWMODE();
 void sendAT_CWJAP();
-void sendAT_CIPSEND();
-void sendMessage();
+void sendAT_CIPSEND(size_t numOfBytesToSend);
+void sendMessage(char *frame);
 void sendAT_CIPCLOSE();
 
 

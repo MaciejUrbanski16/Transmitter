@@ -38,7 +38,6 @@ void initSendingCommands(SendingCommands *sendingCommands)
 	sendingCommands->AT_CWMODE[11] = '\r';
 	sendingCommands->AT_CWMODE[12] = '\n';
 
-	//AT+CWJAP="InfaNET-K-1234","qwertyuiop"
 	sendingCommands->AT_CWJAP[0] = 'A';
 	sendingCommands->AT_CWJAP[1] = 'T';
 	sendingCommands->AT_CWJAP[2] = '+';
@@ -236,8 +235,9 @@ void sendAT_CIPSTART()
 	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
 }
 
-void sendAT_CIPSEND()
+void sendAT_CIPSEND(size_t numOfBytesToSend)
 {
+	sprintf(sendingCommands.AT_CIPSEND, "AT+CIPSEND=%d\r\n", numOfBytesToSend);
 	if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100) == HAL_OK)
 	{
 		HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
@@ -262,13 +262,11 @@ void sendAT_CIPCLOSE()
 	HAL_UART_Transmit(&huart2, errorLog, strlen(errorLog), 100);
 }
 
-void sendMessage()
+void sendMessage(char *frame)
 {
-	uint8_t msg[] = "12 2 4 2 2 \r\n";
-	if(HAL_UART_Transmit(&huart1, msg, strlen(msg), 100) == HAL_OK)
+	if(HAL_UART_Transmit(&huart1, frame, strlen(frame), 100) == HAL_OK)
 	{
-		HAL_UART_Transmit(&huart2, msg, strlen(msg), 100);
-	//	HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
+		HAL_UART_Transmit(&huart2, frame, strlen(frame), 100);
 		currentAtCommand = CIPCLOSE;
 		return;
 	}

@@ -28,6 +28,7 @@ uint8_t sendWifiConnect = 0;
 volatile int received=2;
 uint8_t data[60] ="hello\r\n";
 const uint8_t size = 10;
+uint8_t countSendMsg = 0;
 
 volatile uint8_t rec[10];
 
@@ -40,42 +41,12 @@ static void MX_TIM4_Init(void);
 
 void USART2_IRQHandler(void)
 {
-
-
-	/* USER CODE BEGIN USART1_IRQn 0 */
-
-	/* USER CODE END USART1_IRQn 0 */
 	HAL_UART_IRQHandler(&huart2);
-	/* USER CODE BEGIN USART1_IRQn 1 */
-
-//	uint32_t tmp_flag = 0;
-//	uint32_t temp;
-//	tmp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
-//	received = 5;
-//	if ((tmp_flag != RESET))
-//	{
-//
-//
-//		__HAL_UART_CLEAR_IDLEFLAG(&huart2);
-////		temp = huart1.Instance->ISR;
-////		temp = huart1.Instance->RDR;
-////		HAL_UART_DMAStop(&huart1);
-////		temp = hdma_usart1_rx.Instance->NDTR;
-////		rx_len = BUFFER_SIZE - temp;
-////		recv_end_flag = 1;
-//	}
-	/* USER CODE END USART1_IRQn 1 */
 }
 void USART6_IRQHandler(void)
 {
 	HAL_UART_IRQHandler(&huart6);
 }
-
-//void USART1_IRQHandler(void)
-//{
-//	HAL_UART_IRQHandler(&huart1);  // This is the CubeMX generated HAL handler
-//}
-
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -218,7 +189,6 @@ int main(void)
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-//    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = GPIO_PIN_9;
@@ -280,16 +250,13 @@ int main(void)
 	initHMC5883L();
 	lcdClear();
 
-
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
 	int counterOfTx=0;
-//	USART1_IRQHandler();
 
 	HAL_UART_Receive_IT(&huart6, &rec, size);
 	HAL_UART_Receive_IT(&huart2, &rec, 1);
-//	HAL_UART_Receive_DMA(&huart1, rec, 1);
 
 	while (1)
 	{
@@ -315,6 +282,10 @@ int main(void)
 			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
+				char frameToSend[70];
+				sprintf(frameToSend, "%d %d %d %d %d \r\n", (int)degree, 1000*accel.xAcc.integerPart + accel.xAcc.floatingPart,
+						1000*accel.yAcc.integerPart + accel.yAcc.floatingPart,
+						1000*accel.zAcc.integerPart + accel.zAcc.floatingPart, 50);
 				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d rec:%d atsize:%d\r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
 						accel.yAcc.integerPart, accel.yAcc.floatingPart, accel.zAcc.integerPart, accel.zAcc.floatingPart, received, strlen(sendingCommands.AT));
 				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
@@ -326,55 +297,16 @@ int main(void)
 				    HAL_Delay(5000);
 				    //return 1;
 				}
-				//sendAT_CWMODE();
+				HAL_UART_Transmit(&huart2, frameToSend, strlen(frameToSend), 100);
 
 
-//				//currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-//
-//				if(HAL_UART_Transmit(&huart1, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100) == HAL_OK)
-//				{
-////					if(HAL_UART_Receive(&huart2, rec, 2, 1000) == HAL_OK)
-////					{
-////						received++;
-////					}
-//					//HAL_UART_Transmit(&huart1, "\r\n", strlen(sendingCommands.AT), 100);
-////					if(HAL_UART_Receive(&huart6, rec, 1, 100) == HAL_OK)
-////					{
-////						received =9;
-////					}
-//					HAL_UART_Transmit(&huart2, rec, strlen(rec), 100);
-////					char nok[] = "HAL_NOK AT!";
-////				    lcdClear();
-////				    lcdSetCursor(0, 0);
-////				    lcdSendString(nok);
-////				    HAL_Delay(2000);
-////				    return 1;
-//				}
-////				HAL_UART_Transmit(&huart2, sendingCommands.AT_CWMODE, strlen(sendingCommands.AT_CWMODE), 100);
-////				HAL_UART_Transmit(&huart1, sendingCommands.AT, sizeof(sendingCommands.AT), 100);
-
-
-
-//				if(HAL_UART_Receive_IT(&huart1, rec, 6) != HAL_OK)
-//				{
-//					char nok[] = "HAL_NOK ATR!";
-//				    lcdClear();
-//				    lcdSetCursor(0, 0);
-//				    lcdSendString(nok);
-//				    HAL_Delay(2000);
-//				   // return 1;
-//				}
-				//				if(currentAtCommand == RESPONSE_AT_RECEIVED)
-				//				{
-								//	sendAT_CWMODE();
-				//				}
-				if(sendWifiConnect == 0)
+				if(countSendMsg <= 4)
 				{
 					sendAT_CIPSTART();
 					HAL_Delay(50);
-					sendAT_CIPSEND();
+					sendAT_CIPSEND(strlen(frameToSend));
 					HAL_Delay(50);
-					sendMessage();
+					sendMessage(frameToSend);
 					HAL_Delay(50);
 					sendAT_CIPCLOSE();
 					sendWifiConnect = 1;
@@ -383,6 +315,8 @@ int main(void)
 				{
 					sendAT();
 				}
+				HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
+				countSendMsg++;
 				char st[6];
 				sprintf(st, "Sta:%d", currentAtCommand);
 			    lcdClear();
@@ -395,41 +329,6 @@ int main(void)
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
-		//HAL_UART_Receive_IT(&huart2, &rcvd_data,1);
-
-
-//		switch(currentAtCommand)
-//		{
-//		case AT:
-//			if(1 == receiveATresponse(&sendingCommands))
-//			{
-//
-//			}
-//			break;
-//		case CWJAP:
-//			if(1 == receiveCWJAPresponse(&sendingCommands))
-//			{
-//
-//			}
-//			break;
-//		case CIPMUX:
-//			if(1 == receiveCIPMUXresponse(&sendingCommands))
-//			{
-//
-//			}
-//			break;
-//		case CIPSTART:
-//			if(1 == receiveCIPSTARTresponse(&sendingCommands))
-//			{
-//
-//			}
-//			break;
-//		case SEND_DATA:
-//			sendDataToServer();
-//			break;
-//		default:
-//			break;
-//		}
 	}
 
 }
@@ -499,16 +398,8 @@ void MX_USART2_UART_Init(void)
     huart2.Init.OverSampling = UART_OVERSAMPLING_16;
     HAL_UART_Init(&huart2);
 
-//	 __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);  // enable receive intterupts
-//	 HAL_UART_IRQHandler(&huart2);
-
-		__HAL_UART_ENABLE_IT(&huart2,  UART_IT_RXNE);
-//		HAL_UART_Receive_DMA(&huart2, rec, 1);
-
-//	    HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
-	    HAL_NVIC_EnableIRQ(USART2_IRQn);
-//	 HAL_NVIC_EnableIRQ(USART2_IRQn);
-
+	__HAL_UART_ENABLE_IT(&huart2,  UART_IT_RXNE);
+	HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 void MX_USART1_UART_Init(void)
@@ -527,13 +418,7 @@ void MX_USART1_UART_Init(void)
       while(1);
     }
 
-//	 __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // enable receive intterupts
-//	 NVIC_EnableIRQ(USART1_IRQn);
-	    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-
-
-	  //  HAL_NVIC_EnableIRQ(USART1_IRQn);
-	// HAL_NVIC_EnableIRQ(USART1_IRQn);
+	HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
 }
 
 void MX_USART6_UART_Init(void)
@@ -551,18 +436,7 @@ void MX_USART6_UART_Init(void)
     {
       while(1);
     }
-
-//	 __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);  // enable receive intterupts
-//	 NVIC_EnableIRQ(USART1_IRQn);
-	   // HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
 	__HAL_UART_ENABLE_IT(&huart6,  UART_IT_RXNE);
 	HAL_NVIC_EnableIRQ(USART6_IRQn);
-
-
-//	    HAL_UART_IRQHandler(&huart6);
-
-
-//	    HAL_NVIC_EnableIRQ(USART6_IRQn);
-//	 HAL_NVIC_EnableIRQ(USART6_IRQn);
 }
 

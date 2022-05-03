@@ -98,6 +98,14 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration()
 		float yAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.yRaw);
 		float zAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.zRaw);
 
+		int xScaledAcc = (int)(xAccelerationInMS2 * 1000.0f);
+		int yScaledAcc = (int)(yAccelerationInMS2 * 1000.0f);
+		int zScaledAcc = (int)(zAccelerationInMS2 * 1000.0f);
+
+		calculatedAcceleration.xScaledAcc = xScaledAcc;
+		calculatedAcceleration.yScaledAcc = yScaledAcc;
+		calculatedAcceleration.zScaledAcc = zScaledAcc;
+
 
 		calculatedAcceleration.xAcc = getAcceleration(xAccelerationInMS2);
 		calculatedAcceleration.yAcc = getAcceleration(yAccelerationInMS2);

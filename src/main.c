@@ -105,10 +105,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 }
 
-
-void sendDataToServer(float azimuth, XYZaxisAccelerationMS2 accel)
-{
-}
 void TIM2_IRQHandler(void)
 {
   HAL_TIM_IRQHandler(&timer2);
@@ -283,11 +279,14 @@ int main(void)
 
 				char measurements[70];
 				char frameToSend[70];
-				sprintf(frameToSend, "%d %d %d %d %d \r\n", (int)degree, 1000*accel.xAcc.integerPart + accel.xAcc.floatingPart,
-						1000*accel.yAcc.integerPart + accel.yAcc.floatingPart,
-						1000*accel.zAcc.integerPart + accel.zAcc.floatingPart, 50);
-				sprintf(measurements, "Deg %d, Xacc: %d.%d, Yacc: %d.%d, Zacc: %d.%d rec:%d atsize:%d\r\n", (int)degree, accel.xAcc.integerPart, accel.xAcc.floatingPart,
-						accel.yAcc.integerPart, accel.yAcc.floatingPart, accel.zAcc.integerPart, accel.zAcc.floatingPart, received, strlen(sendingCommands.AT));
+				sprintf(frameToSend, "%d %d %d %d %d \r\n", (int)degree,
+						 accel.xScaledAcc,
+						 accel.yScaledAcc,
+						 accel.zScaledAcc,
+						 50);
+				sprintf(measurements, "Deg %d, Xacc: %d, Yacc: %d, Zacc: %d rec:%d atsize:%d\r\n", (int)degree, accel.xScaledAcc,
+						 accel.yScaledAcc,
+						 accel.zScaledAcc, received, strlen(sendingCommands.AT));
 				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
 				{
 					char nok[] = "HAL_NOK meas!";
@@ -324,8 +323,6 @@ int main(void)
 			    lcdSendString(st);
 			    HAL_Delay(800);
 
-				sendDataToServer(degree, accel);
-
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
@@ -351,10 +348,10 @@ static void MX_I2C1_Init(void)
 
 static void MX_TIM2_Init(void)
 {
-	const uint16_t periodInMs = 1000;
+	const uint16_t durationBetweenSendingTwoMeasurementsInMs = 1000;
 
 	timer2.Instance = TIM2;
-	timer2.Init.Period = 2 * periodInMs - 1;
+	timer2.Init.Period = 2 * durationBetweenSendingTwoMeasurementsInMs - 1;
 	timer2.Init.Prescaler = 8000 - 1;
 	timer2.Init.ClockDivision = 0;
 	timer2.Init.CounterMode = TIM_COUNTERMODE_UP;

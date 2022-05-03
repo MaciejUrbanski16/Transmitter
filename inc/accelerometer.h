@@ -60,6 +60,10 @@ typedef struct
 	AccelerationMS2 yAcc;
 	AccelerationMS2 zAcc;
 
+	int xScaledAcc;
+	int yScaledAcc;
+	int zScaledAcc;
+
 	uint8_t validAcceleration;
 }XYZaxisAccelerationMS2;
 

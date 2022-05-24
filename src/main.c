@@ -233,27 +233,28 @@ int main(void)
 	__HAL_RCC_TIM4_CLK_ENABLE();
 
 	MX_I2C1_Init();
-	MX_TIM4_Init();
+	lcdInit ();
+//	MX_TIM4_Init();
 	MX_TIM2_Init();
-    MX_USART2_UART_Init();
-    MX_USART1_UART_Init();
-    MX_USART6_UART_Init();
+//    MX_USART2_UART_Init();
+//    MX_USART1_UART_Init();
+//    MX_USART6_UART_Init();
 
-    initConnectionCommands(&connectionCommands);
+//    initConnectionCommands(&connectionCommands);
     initSendingCommands(&sendingCommands);
     initAccelerometer();
-	lcdInit ();
+
 	initHMC5883L();
 	lcdClear();
 
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
-	int counterOfTx=0;
-
-	HAL_UART_Receive_IT(&huart6, &rec, size);
-	HAL_UART_Receive_IT(&huart2, &rec, 1);
-
+//	int counterOfTx=0;
+//
+//	HAL_UART_Receive_IT(&huart6, &rec, size);
+//	HAL_UART_Receive_IT(&huart2, &rec, 1);
+	int c = 0;
 	while (1)
 	{
 		if(1 == checkAvalibilityOfDataInRegister())
@@ -274,7 +275,7 @@ int main(void)
 			    lcdSetCursor(1, 0);
 //			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
 //			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
-			    sprintf(accelerationReadString, "Z2 %d.%d", accel.zAcc.integerPart, accel.zAcc.floatingPart);
+			    sprintf(accelerationReadString, "Z2 %d", accel.xScaledAcc);
 			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
@@ -287,46 +288,55 @@ int main(void)
 				sprintf(measurements, "Deg %d, Xacc: %d, Yacc: %d, Zacc: %d rec:%d atsize:%d\r\n", (int)degree, accel.xScaledAcc,
 						 accel.yScaledAcc,
 						 accel.zScaledAcc, received, strlen(sendingCommands.AT));
-				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
-				{
-					char nok[] = "HAL_NOK meas!";
-					lcdClear();
-					lcdSetCursor(0, 0);
-					lcdSendString(nok);
-				    HAL_Delay(5000);
-				    //return 1;
-				}
-				HAL_UART_Transmit(&huart2, frameToSend, strlen(frameToSend), 100);
-
-
-				if(countSendMsg <= 4)
-				{
-					sendAT_CIPSTART();
-					HAL_Delay(50);
-					sendAT_CIPSEND(strlen(frameToSend));
-					HAL_Delay(50);
-					sendMessage(frameToSend);
-					HAL_Delay(50);
-					sendAT_CIPCLOSE();
-					sendWifiConnect = 1;
-				}
-				else
-				{
-					sendAT();
-				}
-				HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
-				countSendMsg++;
-				char st[6];
-				sprintf(st, "Sta:%d", currentAtCommand);
-			    lcdClear();
-			    lcdSetCursor(0, 0);
-			    lcdSendString(st);
-			    HAL_Delay(800);
-
+//				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
+//				{
+//					char nok[] = "HAL_NOK meas!";
+//					lcdClear();
+//					lcdSetCursor(0, 0);
+//					lcdSendString(nok);
+//				    HAL_Delay(5000);
+//				    //return 1;
+//				}
+//				HAL_UART_Transmit(&huart2, frameToSend, strlen(frameToSend), 100);
+//
+//
+//				if(countSendMsg <= 4)
+//				{
+//					sendAT_CIPSTART();
+//					HAL_Delay(50);
+//					sendAT_CIPSEND(strlen(frameToSend));
+//					HAL_Delay(50);
+//					sendMessage(frameToSend);
+//					HAL_Delay(50);
+//					sendAT_CIPCLOSE();
+//					sendWifiConnect = 1;
+//				}
+//				else
+//				{
+//					sendAT();
+//				}
+//				HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
+//				countSendMsg++;
+//				char st[6];
+//				sprintf(st, "Sta:%d", currentAtCommand);
+//			    lcdClear();
+//			    lcdSetCursor(0, 0);
+//			    lcdSendString(st);
+//			    HAL_Delay(800);
+//
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
+
+		c++;
+						char st[6];
+						sprintf(st, "Sta:%d", c);
+					    lcdClear();
+					    lcdSetCursor(0, 0);
+					    lcdSendString(st);
+					    HAL_Delay(800);
 	}
+	HAL_Delay(800);
 
 }
 

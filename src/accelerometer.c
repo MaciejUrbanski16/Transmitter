@@ -54,17 +54,22 @@ void waitTillAccelerometerIsInitialized(void)
 
 RawAcceleration readRawDataFromAccelerometer()
 {
-	if(READING_ACCELERATION == accelerationDataReadingIndicator)
-	{
+//	if(READING_ACCELERATION == accelerationDataReadingIndicator)
+//	{
 		RawAcceleration rawAcceleration;
 		uint8_t DataAcc[6];
 		HAL_I2C_Mem_Read(&hi2c1, ACC_ADDRESS << 1, 0x28, 1, DataAcc, 6, 1);
 		rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0]; //0x28 0x29
 		rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2]; //0x2A 0x2B
 		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4]; //0x2C 0x2D
-
+			char out[10];
+		  sprintf(out, "Z r %d", rawAcceleration.zRaw);
+		  lcdClear();
+		  lcdSetCursor(0, 0);
+		  lcdSendString(out);
+		  	 HAL_Delay(600);
 		return rawAcceleration;
-	}
+//	}
 }
 
 float calculateAcceleration(const int rawAcceleration)
@@ -92,11 +97,14 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration()
 	}
 	else if(AVERAGING_ACCELERATION == accelerationDataReadingIndicator)
 	{
-		RawAcceleration averagedRawAcceleration = averageRawAcceleration();
+		//RawAcceleration averagedRawAcceleration = averageRawAcceleration();
 
-		float xAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.xRaw);
-		float yAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.yRaw);
-		float zAccelerationInMS2 = calculateAcceleration(averagedRawAcceleration.zRaw);
+		RawAcceleration rawAcceleration;
+		rawAcceleration = readRawDataFromAccelerometer();
+
+		float xAccelerationInMS2 = calculateAcceleration(rawAcceleration.xRaw);
+		float yAccelerationInMS2 = calculateAcceleration(rawAcceleration.yRaw);
+		float zAccelerationInMS2 = calculateAcceleration(rawAcceleration.zRaw);
 
 		int xScaledAcc = (int)(xAccelerationInMS2 * 1000.0f);
 		int yScaledAcc = (int)(yAccelerationInMS2 * 1000.0f);
@@ -111,6 +119,13 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration()
 		calculatedAcceleration.yAcc = getAcceleration(yAccelerationInMS2);
 		calculatedAcceleration.zAcc = getAcceleration(zAccelerationInMS2);
 		calculatedAcceleration.validAcceleration = 1;
+
+//		char out[10];
+//	  sprintf(out, "C r %d", calculatedAcceleration.zAcc);
+//	  lcdClear();
+//	  lcdSetCursor(0, 0);
+//	  lcdSendString(out);
+//	  HAL_Delay(600);
 	}
 
 	return calculatedAcceleration;

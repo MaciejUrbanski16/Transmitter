@@ -270,12 +270,59 @@ int main(void)
 			    char magnitudeReadString[16];
 			    lcdClear();
 			    lcdSetCursor(0, 0);
-			    sprintf(magnitudeReadString, "Degree %d", (int)degree);
+			    sprintf(magnitudeReadString, "Azimuth %d", (int)degree);
 			    lcdSendString (magnitudeReadString);
 			    lcdSetCursor(1, 0);
-//			    sprintf(accelerationReadString, "X %d.%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    if(accel.xAcc.integerPart == 0 && accel.xAcc.floatingPart < 0)
+			    {
+			    	if(abs(accel.xAcc.floatingPart)  < 10)
+			    	{
+			    		sprintf(accelerationReadString, "X1 -%d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
+			    	{
+			    		sprintf(accelerationReadString, "X1 -%d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    	else
+			    	{
+			    		sprintf(accelerationReadString, "X1 -%d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    }
+			    else if(accel.xAcc.integerPart < 0 && accel.xAcc.floatingPart < 0)
+			    {
+			    	if(abs(accel.xAcc.floatingPart)  < 10)
+			    	{
+			    		sprintf(accelerationReadString, "X2 %d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
+			    	{
+			    		sprintf(accelerationReadString, "X2 %d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    	else
+			    	{
+			    		sprintf(accelerationReadString, "X2 %d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    	}
+			    }
+			    else
+			    {
+			    	if(abs(accel.xAcc.floatingPart)  < 10)
+			    	{
+			    		sprintf(accelerationReadString, "X3 %d.00%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    	}
+			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
+			    	{
+			    		sprintf(accelerationReadString, "X3 %d.0%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    	}
+			    	else
+			    	{
+			    		sprintf(accelerationReadString, "X3 %d.%d", accel.xAcc.integerPart,  accel.xAcc.floatingPart);
+			    	}
+			    }
+
 //			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
-			    sprintf(accelerationReadString, "Z2 %d", accel.xScaledAcc);
+
+//			    sprintf(accelerationReadString, "Z2 %d", accel.xScaledAcc);
+
 			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
@@ -336,8 +383,6 @@ int main(void)
 					    lcdSendString(st);
 					    HAL_Delay(800);
 	}
-	HAL_Delay(800);
-
 }
 
 static void MX_I2C1_Init(void)

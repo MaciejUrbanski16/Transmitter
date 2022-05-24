@@ -62,13 +62,14 @@ RawAcceleration readRawDataFromAccelerometer()
 		rawAcceleration.xRaw = (DataAcc[1]<<8) | DataAcc[0]; //0x28 0x29
 		rawAcceleration.yRaw = (DataAcc[3]<<8) | DataAcc[2]; //0x2A 0x2B
 		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4]; //0x2C 0x2D
-			char out[10];
-		  sprintf(out, "Z r %d", rawAcceleration.zRaw);
-		  lcdClear();
-		  lcdSetCursor(0, 0);
-		  lcdSendString(out);
-		  	 HAL_Delay(600);
-		return rawAcceleration;
+
+//			char out[10];
+//		  sprintf(out, "Z r %d", rawAcceleration.zRaw);
+//		  lcdClear();
+//		  lcdSetCursor(0, 0);
+//		  lcdSendString(out);
+//		  	 HAL_Delay(600);
+
 //	}
 }
 

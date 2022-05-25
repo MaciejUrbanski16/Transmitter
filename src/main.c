@@ -20,6 +20,7 @@ UART_HandleTypeDef huart2, huart1, huart6;
 
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
+
 ConnectionCommands connectionCommands;
 
 SendingCommands sendingCommands;
@@ -46,6 +47,34 @@ void USART2_IRQHandler(void)
 void USART6_IRQHandler(void)
 {
 	HAL_UART_IRQHandler(&huart6);
+}
+
+void EXTI0_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+}
+
+void EXTI15_10_IRQHandler(void)
+{
+	if(__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_11) != RESET)
+	{
+    	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+	}
+
+	if(__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_13) != RESET)
+	{
+    	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+	}
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+	if(GPIO_Pin == GPIO_PIN_13 || GPIO_Pin == GPIO_PIN_11)
+	{
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_5);
+
+	}
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -134,7 +163,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 int main(void)
 {
-  	SystemCoreClock = 8000000;	// taktowanie 8Mhz
+  	SystemCoreClock = 8000000;	// 8MHz
 
 	RCC_OscInitTypeDef RCC_OscInitStruct;
 	RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -179,6 +208,22 @@ int main(void)
 	 __HAL_RCC_GPIOA_CLK_ENABLE();
 	 __HAL_RCC_GPIOB_CLK_ENABLE();
 	 __HAL_RCC_GPIOC_CLK_ENABLE();
+
+	GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_13;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+	GPIO_InitStruct.Pin = GPIO_PIN_5;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
 
 
     GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7/*|GPIO_PIN_8*/;

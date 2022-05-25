@@ -14,6 +14,7 @@
 #include "accelerometer.h"
 #include "gsm_transmission.h"
 #include "esp8266_transmission.h"
+#include "startup.h"
 
 UART_HandleTypeDef huart2, huart1, huart6;
 
@@ -72,6 +73,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == GPIO_PIN_13 || GPIO_Pin == GPIO_PIN_11)
 	{
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_5);
+		if(measurementStarted == 0)
+		{
+			measurementStarted = 1;
+		}
+		else if(measurementStarted == 1)
+		{
+			measurementStarted = 0;
+		}
 
 	}
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -210,7 +219,7 @@ int main(void)
 	 __HAL_RCC_GPIOC_CLK_ENABLE();
 
 	GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_13;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -302,7 +311,11 @@ int main(void)
 	int c = 0;
 	while (1)
 	{
-		if(1 == checkAvalibilityOfDataInRegister())
+		if(measurementStarted == 0)
+		{
+			initialiseBeforeStart();
+		}
+		if(1 == checkAvalibilityOfDataInRegister() && measurementStarted == 1)
 		{
 			XYZaxisAccelerationMS2 accel;
 		    accel = getCalculatedAcceleration();

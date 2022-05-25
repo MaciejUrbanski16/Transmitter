@@ -277,45 +277,45 @@ int main(void)
 			    {
 			    	if(abs(accel.xAcc.floatingPart)  < 10)
 			    	{
-			    		sprintf(accelerationReadString, "X1 -%d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x -%d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
 			    	{
-			    		sprintf(accelerationReadString, "X1 -%d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x -%d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    	else
 			    	{
-			    		sprintf(accelerationReadString, "X1 -%d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x -%d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    }
 			    else if(accel.xAcc.integerPart < 0 && accel.xAcc.floatingPart < 0)
 			    {
 			    	if(abs(accel.xAcc.floatingPart)  < 10)
 			    	{
-			    		sprintf(accelerationReadString, "X2 %d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.00%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
 			    	{
-			    		sprintf(accelerationReadString, "X2 %d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.0%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    	else
 			    	{
-			    		sprintf(accelerationReadString, "X2 %d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.%d", accel.xAcc.integerPart, (-1) * accel.xAcc.floatingPart);
 			    	}
 			    }
 			    else
 			    {
 			    	if(abs(accel.xAcc.floatingPart)  < 10)
 			    	{
-			    		sprintf(accelerationReadString, "X3 %d.00%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.00%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
 			    	}
 			    	else if(abs(accel.xAcc.floatingPart)  >= 10 && abs(accel.xAcc.floatingPart) < 100)
 			    	{
-			    		sprintf(accelerationReadString, "X3 %d.0%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.0%d", accel.xAcc.integerPart, accel.xAcc.floatingPart);
 			    	}
 			    	else
 			    	{
-			    		sprintf(accelerationReadString, "X3 %d.%d", accel.xAcc.integerPart,  accel.xAcc.floatingPart);
+			    		sprintf(accelerationReadString, "Accel_x %d.%d", accel.xAcc.integerPart,  accel.xAcc.floatingPart);
 			    	}
 			    }
 
@@ -374,14 +374,6 @@ int main(void)
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
-
-		c++;
-						char st[6];
-						sprintf(st, "Sta:%d", c);
-					    lcdClear();
-					    lcdSetCursor(0, 0);
-					    lcdSendString(st);
-					    HAL_Delay(800);
 	}
 }
 
@@ -484,9 +476,13 @@ void MX_USART6_UART_Init(void)
     huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
     huart6.Init.OverSampling = UART_OVERSAMPLING_16;
 
+    HAL_Delay(200);
     if (HAL_UART_Init(&huart6) != HAL_OK)
     {
-      while(1);
+    	while(1)
+    	{
+
+    	}
     }
 	__HAL_UART_ENABLE_IT(&huart6,  UART_IT_RXNE);
 	HAL_NVIC_EnableIRQ(USART6_IRQn);

@@ -64,11 +64,14 @@ RawAcceleration readRawDataFromAccelerometer()
 		rawAcceleration.zRaw = (DataAcc[5]<<8) | DataAcc[4]; //0x2C 0x2D
 
 //			char out[10];
-//		  sprintf(out, "Z r %d", rawAcceleration.zRaw);
+//		  sprintf(out, "X r %d", rawAcceleration.xRaw);
 //		  lcdClear();
 //		  lcdSetCursor(0, 0);
 //		  lcdSendString(out);
 //		  	 HAL_Delay(600);
+
+
+	return rawAcceleration;
 
 //	}
 }
@@ -88,6 +91,7 @@ XYZaxisAccelerationMS2 getCalculatedAcceleration()
 	if(READING_ACCELERATION == accelerationDataReadingIndicator)
 	{
 		RawAcceleration rawAcceleration;
+
 		rawAcceleration = readRawDataFromAccelerometer();
 		rawAccelerationBuffer[indexInRawAccelerationBuffer] = rawAcceleration;
 		indexInRawAccelerationBuffer++;

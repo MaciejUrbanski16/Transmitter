@@ -12,7 +12,6 @@
 #include "lcd_display.h"
 #include "magnetometer.h"
 #include "accelerometer.h"
-#include "gsm_transmission.h"
 #include "esp8266_transmission.h"
 #include "startup.h"
 
@@ -22,7 +21,7 @@ UART_HandleTypeDef huart2, huart1, huart6;
 I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef timer2, timer4;
 
-ConnectionCommands connectionCommands;
+//ConnectionCommands connectionCommands;
 
 SendingCommands sendingCommands;
 volatile CurrentATcommand currentAtCommand = AT;
@@ -33,6 +32,7 @@ const uint8_t size = 10;
 uint8_t countSendMsg = 0;
 
 volatile uint8_t rec[10];
+volatile uint8_t readyToSend = 0;
 
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
@@ -92,8 +92,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 	if(huart->Instance == USART1)
 	{
-		currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-
+		//currentAtCommand = RESPONSE_CWJAP_RECEIVED;
 	}
 	else if(huart->Instance == USART2)
 	{
@@ -102,43 +101,46 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	else if(huart->Instance == USART6)
 	{
 		int i = 0;
-		switch(currentAtCommand)
+		if(readyToSend == 0)
 		{
-		case AT:
-			for( i=0; i<size; i++ )
+			switch(currentAtCommand)
 			{
-				if(rec[i] == 'O' || rec[i] == 'K')
+			case AT:
+				for( i=0; i<size; i++ )
 				{
-					currentAtCommand = RESPONSE_AT_RECEIVED;
-					break;
+					if(rec[i] == 'O' || rec[i] == 'K')
+					{
+						currentAtCommand = RESPONSE_AT_RECEIVED;
+						break;
+					}
 				}
-			}
-			HAL_UART_Receive_IT(&huart6, &rec, size);
-			break;
-		case CWMODE:
-			for( i=0; i<size; i++ )
-			{
-				if(rec[i] == 'O' || rec[i] == 'K')
+				HAL_UART_Receive_IT(&huart6, &rec, size);
+				break;
+			case CWMODE:
+				for( i=0; i<size; i++ )
 				{
-					currentAtCommand = RESPONSE_AT_CWMODE_RECEIVED;
-					break;
+					if(rec[i] == 'O' || rec[i] == 'K')
+					{
+						currentAtCommand = RESPONSE_AT_CWMODE_RECEIVED;
+						break;
+					}
 				}
-			}
-			HAL_UART_Receive_IT(&huart6, &rec, size);
-			break;
-		case CWJAP:
-			for( i=0; i<size; i++ )
-			{
-				if(rec[i] == 'W' || rec[i] == 'I')
+				HAL_UART_Receive_IT(&huart6, &rec, size);
+				break;
+			case CWJAP:
+				for( i=0; i<size; i++ )
 				{
-					currentAtCommand = RESPONSE_CWJAP_RECEIVED;
-					break;
+					if(rec[i] == 'W' || rec[i] == 'I')
+					{
+						currentAtCommand = RESPONSE_CWJAP_RECEIVED;
+						readyToSend = 1;
+						break;
+					}
 				}
+				HAL_UART_Receive_IT(&huart6, &rec, size);
+				break;
 			}
-			HAL_UART_Receive_IT(&huart6, &rec, size);
-			break;
 		}
-
 	}
 
 }
@@ -166,7 +168,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else if(htim->Instance == TIM4)
 	{
-
+		if(readyToSend == 0)
+		{
+			readyToSend = 1;
+		}
 	}
 }
 
@@ -288,11 +293,11 @@ int main(void)
 
 	MX_I2C1_Init();
 	lcdInit ();
-//	MX_TIM4_Init();
+	MX_TIM4_Init();
 	MX_TIM2_Init();
-//    MX_USART2_UART_Init();
-//    MX_USART1_UART_Init();
-//    MX_USART6_UART_Init();
+    MX_USART2_UART_Init();
+    MX_USART1_UART_Init();
+    MX_USART6_UART_Init();
 
 //    initConnectionCommands(&connectionCommands);
     initSendingCommands(&sendingCommands);
@@ -304,11 +309,9 @@ int main(void)
 	waitTillAccelerometerIsInitialized();
 	waitTillMagnetometerIsInitialized();
 
-//	int counterOfTx=0;
-//
-//	HAL_UART_Receive_IT(&huart6, &rec, size);
-//	HAL_UART_Receive_IT(&huart2, &rec, 1);
-	int c = 0;
+	HAL_UART_Receive_IT(&huart6, &rec, size);
+	HAL_UART_Receive_IT(&huart2, &rec, 1);
+
 	while (1)
 	{
 		if(measurementStarted == 0)
@@ -331,6 +334,9 @@ int main(void)
 			    sprintf(magnitudeReadString, "Azimuth %d", (int)degree);
 			    lcdSendString (magnitudeReadString);
 			    lcdSetCursor(1, 0);
+
+			    ////
+
 			    if(accel.xAcc.integerPart == 0 && accel.xAcc.floatingPart < 0)
 			    {
 			    	if(abs(accel.xAcc.floatingPart)  < 10)
@@ -377,14 +383,17 @@ int main(void)
 			    	}
 			    }
 
-//			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
+			    ////
 
+//			    sprintf(accelerationReadString, "Y %d.%d -%s1", accel.yAcc.integerPart, accel.yAcc.floatingPart, &connectionCommands.AT);
 //			    sprintf(accelerationReadString, "Z2 %d", accel.xScaledAcc);
 
 			    lcdSendString(accelerationReadString);
 
 				char measurements[70];
 				char frameToSend[70];
+
+				//preparing frame to send
 				sprintf(frameToSend, "%d %d %d %d %d \r\n", (int)degree,
 						 accel.xScaledAcc,
 						 accel.yScaledAcc,
@@ -393,15 +402,31 @@ int main(void)
 				sprintf(measurements, "Deg %d, Xacc: %d, Yacc: %d, Zacc: %d rec:%d atsize:%d\r\n", (int)degree, accel.xScaledAcc,
 						 accel.yScaledAcc,
 						 accel.zScaledAcc, received, strlen(sendingCommands.AT));
-//				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
-//				{
-//					char nok[] = "HAL_NOK meas!";
-//					lcdClear();
-//					lcdSetCursor(0, 0);
-//					lcdSendString(nok);
-//				    HAL_Delay(5000);
-//				    //return 1;
-//				}
+
+				if(HAL_UART_Transmit(&huart2, measurements, strlen(measurements), 120) != HAL_OK)
+				{
+					char nok[] = "HAL_NOK meas!";
+					lcdClear();
+					lcdSetCursor(0, 0);
+					lcdSendString(nok);
+				    HAL_Delay(5000);
+				    //return 1;
+				}
+
+				//sending created frame to server using wi-fi
+				if(readyToSend == 1)
+				{
+					sendAT_CIPSTART();
+					if(HAL_UART_Transmit(&huart6, frameToSend, strlen(frameToSend), 20) != HAL_OK)
+					{
+						char nok[] = "HAL_NOK send measurements!";
+						lcdClear();
+						lcdSetCursor(0, 0);
+						lcdSendString(nok);
+					    HAL_Delay(5000);
+					}
+					sendAT_CIPCLOSE();
+				}
 //				HAL_UART_Transmit(&huart2, frameToSend, strlen(frameToSend), 100);
 //
 //
@@ -471,7 +496,7 @@ static void MX_TIM2_Init(void)
 
 static void MX_TIM4_Init(void)
 {
-	const uint16_t periodInMs = 100;
+	const uint16_t periodInMs = 200;
 
 	timer4.Instance = TIM4;
 	timer4.Init.Period = 2 * periodInMs - 1;

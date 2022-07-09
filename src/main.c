@@ -417,10 +417,7 @@ int main(void)
 				if(readyToSend == 1)
 				{
 					sendAT_CIPSTART();
-<<<<<<< HEAD
-=======
 					sendAT_CIPSEND(strlen(frameToSend));
->>>>>>> 9cc873a (Improve readibility of code)
 					if(HAL_UART_Transmit(&huart6, frameToSend, strlen(frameToSend), 20) != HAL_OK)
 					{
 						char nok[] = "HAL_NOK send measurements!";
@@ -431,37 +428,7 @@ int main(void)
 					}
 					sendAT_CIPCLOSE();
 				}
-<<<<<<< HEAD
-//				HAL_UART_Transmit(&huart2, frameToSend, strlen(frameToSend), 100);
-//
-//
-//				if(countSendMsg <= 4)
-//				{
-//					sendAT_CIPSTART();
-//					HAL_Delay(50);
-//					sendAT_CIPSEND(strlen(frameToSend));
-//					HAL_Delay(50);
-//					sendMessage(frameToSend);
-//					HAL_Delay(50);
-//					sendAT_CIPCLOSE();
-//					sendWifiConnect = 1;
-//				}
-//				else
-//				{
-//					sendAT();
-//				}
-//				HAL_UART_Transmit(&huart2, sendingCommands.AT_CIPSEND, strlen(sendingCommands.AT_CIPSEND), 100);
-//				countSendMsg++;
-//				char st[6];
-//				sprintf(st, "Sta:%d", currentAtCommand);
-//			    lcdClear();
-//			    lcdSetCursor(0, 0);
-//			    lcdSendString(st);
-//			    HAL_Delay(800);
-//
-=======
 
->>>>>>> 9cc873a (Improve readibility of code)
 			    accelerationDataReadingIndicator = READING_ACCELERATION;
 			}
 		}
